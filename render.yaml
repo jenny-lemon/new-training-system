@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: lemon-api
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    envVars:
+      - key: GOOGLE_CREDS
+        sync: false
+      - key: SHEET_ID
+        sync: false
