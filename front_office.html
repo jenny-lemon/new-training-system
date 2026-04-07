@@ -513,20 +513,29 @@ const API_URL = 'https://script.google.com/a/macros/lemonclean.com.tw/s/AKfycbxQ
 
 async function run(action, data) {
   try {
-    // 用 GET + URL 參數呼叫(最穩定,無 CORS 問題)
     const params = new URLSearchParams({ action });
     if (data) {
       Object.entries(data).forEach(([k, v]) => {
-        params.set(k, typeof v === 'object' ? JSON.stringify(v) : v);
+        params.set(k, typeof v === 'object' ? JSON.stringify(v) : String(v));
       });
     }
-    const url = API_URL + '?' + params.toString();
-    const res = await fetch(url, { redirect: 'follow' });
+    // registerNewbie 資料量大,改用 POST 避免 URL 長度限制
+    let res;
+    if (action === 'registerNewbie') {
+      res = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ action, ...(data||{}) }),
+        redirect: 'follow',
+      });
+    } else {
+      const url = API_URL + '?' + params.toString();
+      res = await fetch(url, { redirect: 'follow' });
+    }
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const text = await res.text();
-    // 如果回傳的是 HTML(不是 JSON),代表部署設定有問題
     if (text.trim().startsWith('<')) {
-      throw new Error('回傳了 HTML 而非 JSON,請確認已重新部署並更新為新版本');
+      throw new Error('回傳了 HTML 而非 JSON');
     }
     return JSON.parse(text);
   } catch(e) {
@@ -606,16 +615,23 @@ function autoSlashDob(el) {
 }
 
 async function doRegister() {
-  // 用 JSON 字串傳送，避免中文 key 被 URL encode 破壞
-  const dataObj = {
-    '姓名': v('r-name'), '身份證字號': v('r-id'), '出生年月日': v('r-dob'),
-    '手機號碼': v('r-phone'), '電子郵件': v('r-email'), '聯絡地址': v('r-addr'),
-    '緊急聯絡人姓名': v('r-ec-name'), '緊急聯絡人關係': v('r-ec-rel'),
-    '緊急聯絡人電話': v('r-ec-phone'), '交通工具': v('r-transport'),
-    '新冠疫苗': v('r-vaccine'), '服務地區': v('r-region'), '介紹人': v('r-referrer'),
-  };
+  // 用英文 key 傳送，避免中文 key 被 URL encode 破壞
   setBtnLoading('reg-btn', true);
-  const r = await run('registerNewbie', {data: JSON.stringify(dataObj)});
+  const r = await run('registerNewbie', {
+    name: v('r-name'),
+    idNumber: v('r-id'),
+    dob: v('r-dob'),
+    phone: v('r-phone'),
+    email: v('r-email'),
+    address: v('r-addr'),
+    ecName: v('r-ec-name'),
+    ecRel: v('r-ec-rel'),
+    ecPhone: v('r-ec-phone'),
+    transport: v('r-transport'),
+    vaccine: v('r-vaccine'),
+    region: v('r-region'),
+    referrer: v('r-referrer'),
+  });
   setBtnLoading('reg-btn', false);
   if (!r.ok) { showErr('reg-err', r.error); return; }
   showPg('pg-reg-done');
