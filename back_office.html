@@ -425,7 +425,7 @@ async function doLogin() {
 
   let r;
   try {
-    r = await run('apiAdminLogin',email,pwd);
+    r = await run('adminLogin', {email, password: pwd});
   } catch(e) {
     btn.disabled=false; btn.textContent='登入後台';
     showErr('login-err','系統錯誤:'+e.message);
