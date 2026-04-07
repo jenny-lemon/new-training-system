@@ -366,26 +366,46 @@ let _curStaffId = '';
 let _nbPage = 1;
 
 // API 呼叫(用 fetch POST 到同一個 GAS Web App URL)
-const API_URL = 'https://script.google.com/a/macros/lemonclean.com.tw/s/AKfycbxQ5cTV1a8o3c8eJf2qvoC1S2sxrC5q4Tw9Sy9xzyrnrSdJ3HslQHCy2vxjRDyGABuq/exec';
+const API_URL = 'https://new-training.jenny-bed.workers.dev';
 
 async function run(action, data) {
   try {
-    // 用 GET + URL 參數呼叫(最穩定,無 CORS 問題)
-    const params = new URLSearchParams({ action });
-    if (data) {
-      Object.entries(data).forEach(([k, v]) => {
-        params.set(k, typeof v === 'object' ? JSON.stringify(v) : v);
-      });
-    }
-    const url = API_URL + '?' + params.toString();
-    const res = await fetch(url, { redirect: 'follow' });
+    const actionMap = {
+      'adminLogin':         '/api/admin-login',
+      'logout':             '/api/logout',
+      'getPendingList':     '/api/get-pending-list',
+      'approveAccount':     '/api/approve-account',
+      'rejectPending':      '/api/reject-pending',
+      'getAccountList':     '/api/get-account-list',
+      'toggleAccount':      '/api/toggle-account',
+      'resetPassword':      '/api/reset-password',
+      'getStaffList':       '/api/get-staff-list',
+      'getStaffDetail':     '/api/get-staff-detail',
+      'getDocList':         '/api/get-doc-list',
+      'reviewDoc':          '/api/review-doc',
+      'confirmGoodConduct': '/api/confirm-good-conduct',
+      'getDepositList':     '/api/get-deposit-list',
+      'confirmDeposit':     '/api/confirm-deposit',
+      'getRefundList':      '/api/get-refund-list',
+      'reviewRefund':       '/api/review-refund',
+      'completeRefund':     '/api/complete-refund',
+      'getBankList':        '/api/get-bank-list',
+      'updateBank':         '/api/update-bank-admin',
+      'getRegions':         '/api/get-regions',
+      'saveRegion':         '/api/save-region',
+      'getAdminList':       '/api/get-admin-list',
+      'createAdmin':        '/api/create-admin',
+      'resetAdminPassword': '/api/reset-admin-password',
+      'exportStaffHtml':    '/api/export-staff-html',
+    };
+    const path = actionMap[action] || '/api/' + action.replace(/([A-Z])/g, '-$1').toLowerCase();
+    const res = await fetch(API_URL + path, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data || {}),
+    });
     if (!res.ok) throw new Error('HTTP ' + res.status);
-    const text = await res.text();
-    // 如果回傳的是 HTML(不是 JSON),代表部署設定有問題
-    if (text.trim().startsWith('<')) {
-      throw new Error('回傳了 HTML 而非 JSON,請確認已重新部署並更新為新版本');
-    }
-    return JSON.parse(text);
+    return await res.json();
   } catch(e) {
     return { ok: false, error: '連線失敗:' + e.message };
   }
