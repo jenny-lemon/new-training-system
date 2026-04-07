@@ -606,7 +606,8 @@ function autoSlashDob(el) {
 }
 
 async function doRegister() {
-  const data = {
+  // 用 JSON 字串傳送，避免中文 key 被 URL encode 破壞
+  const dataObj = {
     '姓名': v('r-name'), '身份證字號': v('r-id'), '出生年月日': v('r-dob'),
     '手機號碼': v('r-phone'), '電子郵件': v('r-email'), '聯絡地址': v('r-addr'),
     '緊急聯絡人姓名': v('r-ec-name'), '緊急聯絡人關係': v('r-ec-rel'),
@@ -614,7 +615,7 @@ async function doRegister() {
     '新冠疫苗': v('r-vaccine'), '服務地區': v('r-region'), '介紹人': v('r-referrer'),
   };
   setBtnLoading('reg-btn', true);
-  const r = await run('registerNewbie', {data});
+  const r = await run('registerNewbie', {data: JSON.stringify(dataObj)});
   setBtnLoading('reg-btn', false);
   if (!r.ok) { showErr('reg-err', r.error); return; }
   showPg('pg-reg-done');
