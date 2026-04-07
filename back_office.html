@@ -573,12 +573,11 @@ async function openProfile(staffId){
 
   document.getElementById('pm-basic').innerHTML=`<div class="card"><div class="card-hd"><div class="card-title">基本資料</div></div>
     ${mkDr('姓名',staff.name)}${mkDr('身份證字號',`<span style="font-family:monospace">${staff.idNumber}</span>`)}
-    ${mkDr('出生年月日',staff.dob||'—')}${mkDr('手機號碼',staff.phone)}
+    ${mkDr('出生年月日',staff.dob||'—')}${mkDr('手機號碼', staff.phone ? (String(staff.phone).startsWith('0') ? staff.phone : '0'+staff.phone) : '—')}
     ${mkDr('電子郵件',staff.email||'—')}${mkDr('聯絡地址',staff.address||'—')}
-    ${mkDr('緊急聯絡人',(staff.emergencyName||'—')+'('+(staff.emergencyRel||'—')+') '+(staff.emergencyPhone||'—'))}
+    ${mkDr('緊急聯絡人',(staff.emergencyName||'—')+'('+(staff.emergencyRel||'—')+') '+(staff.emergencyPhone ? (String(staff.emergencyPhone).startsWith('0') ? staff.emergencyPhone : '0'+staff.emergencyPhone) : '—'))}
     ${mkDr('交通工具',staff.transport||'—')}${mkDr('新冠疫苗',staff.vaccine||'—')}
-    ${mkDr('服務地區',staff.region)}${mkDr('帳號狀態',`<span class="bdg ${staff.status==='啟用中'?'bok':'bg'}">${staff.status}</span>`)}
-    ${mkDr('時薪','$'+staff.hourlyRate+' / 時')}</div>`;
+    ${mkDr('服務地區',staff.region)}${mkDr('帳號狀態',`<span class="bdg ${staff.status==='啟用中'?'bok':'bg'}">${staff.status}</span>`)}</div>`;
 
   const ctFile=contract&&contract['Drive檔案ID']?`<a href="https://drive.google.com/file/d/${contract['Drive檔案ID']}/view" target="_blank" class="btn btn-sm">⬡ 開啟契約</a>`:'';
   document.getElementById('pm-contract').innerHTML=`
