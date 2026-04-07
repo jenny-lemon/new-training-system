@@ -501,7 +501,7 @@ button,input,select,textarea{font-family:var(--font);}button{cursor:pointer;}
 // ════════════════════
 //  狀態
 // ════════════════════
-let TOKEN = '';
+let TOKEN = localStorage.getItem('lemon_token') || '';
 let PROFILE = null;
 let _uploadType = '';
 
@@ -561,6 +561,25 @@ function expandSb()  { document.getElementById('sidebar').classList.remove('hidd
 // ════════════════════
 //  登入
 // ════════════════════
+// 頁面載入時自動還原 session
+window.addEventListener('DOMContentLoaded', async () => {
+  if (TOKEN) {
+    const r = await run('getMyProfile', { token: TOKEN });
+    if (r.ok) {
+      PROFILE = r;
+      document.getElementById('nav-name').textContent = r.staff.name;
+      document.getElementById('nav-role').textContent = r.staff.region;
+      document.getElementById('nav-av').textContent = r.staff.name.charAt(0);
+      showPg('pg-main');
+      go('overview', document.getElementById('n-overview'));
+      return;
+    } else {
+      TOKEN = '';
+      localStorage.removeItem('lemon_token');
+    }
+  }
+});
+
 async function doLogin() {
   const id  = document.getElementById('f-id').value.trim();
   const tel = document.getElementById('f-tel').value.trim();
@@ -573,6 +592,7 @@ async function doLogin() {
   if (!r.ok) { showErr('login-err', r.error); return; }
 
   TOKEN = r.token;
+  localStorage.setItem('lemon_token', TOKEN);
   document.getElementById('nav-name').textContent = r.name;
   document.getElementById('nav-role').textContent = r.region;
   document.getElementById('nav-av').textContent   = r.name.charAt(0);
@@ -585,6 +605,7 @@ async function doLogin() {
 async function doLogout() {
   await run('logout', {token:TOKEN});
   TOKEN = ''; PROFILE = null;
+  localStorage.removeItem('lemon_token');
   showPg('pg-login');
 }
 
