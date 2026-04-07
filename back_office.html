@@ -732,13 +732,14 @@ async function loadRegions(){
   </div>`).join('')+`<div class="card" style="border-style:dashed;text-align:center;color:var(--g400);padding:24px;cursor:pointer" onclick="addRegion()"><div style="font-size:20px;margin-bottom:6px">+</div><div>新增地區(台中,高雄…)</div></div>`;
 }
 function editRegionAcc(name,cur){
-  const acc=prompt(`修改"${name}"押金收款帳號(目前:${cur||'未設定'}):`,cur);
+  const acc=prompt('修改['+name+']押金收款帳號(目前:'+(cur||'未設定')+'):', cur);
   if(acc===null)return;
   run('saveRegion',{token:TOKEN,regionJson:JSON.stringify({'地區':name,'押金帳號':acc})}).then(r=>{if(!r.ok)toast(r.error);else{toast('✓ 已更新押金帳號');loadRegions();}});
 }
 function addRegion(){
-  const name=prompt('新地區名稱(如:台中):');if(!name)return;
-  run('saveRegion',{token:TOKEN,regionJson:JSON.stringify({'地區':name,'公司名稱':'檸檬專業清潔有限公司','統一編號':'42627791','公司地址':'','公司電話':'02-27002386','負責人':'謝曜聲','押金銀行':'富邦銀行(012)','押金帳號':'','Drive新訓建檔':'','Drive新訓退訓':'','Drive線上專員':'','Sheets發信工作表':'','負責管理員Email':''})).then(r=>{if(!r.ok)toast(r.error);else{toast('✓ 地區已新增,請至地區設定填入 Drive/Sheets ID');loadRegions();}});
+  var name=prompt("新地區名稱(如:台中)");if(!name)return;
+  var obj={"地區":name,"公司名稱":"檸檬專業清潔有限公司","統一編號":"42627791","公司地址":"","公司電話":"02-27002386","負責人":"謝曜聲","押金銀行":"富邦銀行(012)","押金帳號":"","Drive新訓建檔":"","Drive新訓退訓":"","Drive線上專員":"","Sheets發信工作表":"","負責管理員Email":""};
+  run("saveRegion",{token:TOKEN,regionJson:JSON.stringify(obj)}).then(function(r){if(!r.ok)toast(r.error);else{toast("地區已新增,請至地區設定填入 Drive/Sheets ID");loadRegions();}});
 }
 
 // ════════════════════
