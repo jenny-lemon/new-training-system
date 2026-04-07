@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>檸檬家事 · 新人系統</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --coral:#D85A30;--coral-lt:#FAECE7;--coral-dk:#7A2E10;
+  --teal:#1D9E75;--teal-lt:#E1F5EE;--teal-dk:#0A5C42;
+  --blue:#378ADD;--blue-lt:#E6F1FB;--blue-dk:#0C447C;
+  --amber:#BA7517;--amber-lt:#FAEEDA;
+  --red:#C0392B;--red-lt:#FCEAEA;
+  --g50:#F9F8F4;--g100:#F0EDE6;--g200:#E0DDD5;--g300:#C8C5BC;
+  --g400:#9E9B93;--g500:#6B6862;--g600:#3E3C38;--g800:#1A1917;
+  --white:#FFF;--bdr:rgba(0,0,0,0.09);--bdr-md:rgba(0,0,0,0.14);
+  --r8:8px;--r12:12px;--r16:16px;
+  --font:'Noto Sans TC',sans-serif;--shadow:0 2px 16px rgba(0,0,0,0.08);
+  --sb:210px;
+}
+body{font-family:var(--font);background:var(--g100);color:var(--g800);font-size:14px;line-height:1.6;}
+a{color:var(--blue);text-decoration:none;}
+button,input,select,textarea{font-family:var(--font);}button{cursor:pointer;}
+
+.pg{display:none;min-height:100vh;}.pg.on{display:block;}
+
+/* LOGIN */
+.lw{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--g100);padding:24px;}
+.lc{background:var(--white);border:1px solid var(--bdr);border-radius:var(--r16);padding:40px 36px;width:100%;max-width:400px;box-shadow:var(--shadow);}
+.logo{font-size:22px;font-weight:700;margin-bottom:4px;}.lem{color:var(--coral);}
+.logo-sub{font-size:13px;color:var(--g400);margin-bottom:28px;}
+.lbadge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;margin-bottom:20px;background:var(--teal-lt);color:var(--teal-dk);}
+.fi{margin-bottom:14px;}
+.fi label{display:block;font-size:12px;font-weight:500;color:var(--g500);margin-bottom:5px;}
+.fi input,.fi select,.fi textarea{width:100%;padding:9px 12px;border:1px solid var(--bdr-md);border-radius:var(--r8);font-size:13px;outline:none;transition:border-color .15s;color:var(--g800);background:var(--white);}
+.fi input:focus,.fi select:focus{border-color:var(--coral);}
+.fi .hint{font-size:11px;color:var(--g400);margin-top:4px;}
+.fi .fmt-hint{font-size:11px;color:var(--blue-dk);background:var(--blue-lt);padding:3px 8px;border-radius:4px;margin-top:4px;display:inline-block;}
+.btn-full{width:100%;padding:11px;border-radius:var(--r8);background:var(--coral);color:var(--white);font-size:14px;font-weight:600;border:none;margin-top:8px;transition:background .15s;}
+.btn-full:hover{background:var(--coral-dk);}
+.btn-full:disabled{background:var(--g300);cursor:not-allowed;}
+.sw{text-align:center;margin-top:18px;font-size:12px;color:var(--g400);}
+.sw a{color:var(--coral);font-weight:500;cursor:pointer;}
+.err{background:var(--red-lt);border:1px solid #E8A9A9;border-radius:var(--r8);padding:9px 12px;font-size:12px;color:var(--red);margin-bottom:12px;display:none;}
+
+/* SHELL */
+.shell{display:flex;min-height:100vh;position:relative;}
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.35);z-index:50;}
+.overlay.on{display:block;}
+.sidebar{background:var(--white);border-right:1px solid var(--bdr);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;width:var(--sb);z-index:60;transition:transform .25s;overflow-y:auto;}
+.sidebar.hidden{transform:translateX(calc(-1 * var(--sb)));}
+.content{flex:1;background:var(--g50);margin-left:var(--sb);transition:margin-left .25s;min-height:100vh;}
+.content.wide{margin-left:0;}
+.sb-toggle{position:fixed;top:12px;left:12px;z-index:70;width:36px;height:36px;border-radius:var(--r8);background:var(--white);border:1px solid var(--bdr-md);display:none;align-items:center;justify-content:center;font-size:18px;color:var(--g600);box-shadow:var(--shadow);cursor:pointer;}
+.sb-reopen{position:fixed;top:50%;left:0;z-index:65;transform:translateY(-50%);background:var(--white);border:1px solid var(--bdr-md);border-left:none;border-radius:0 var(--r8) var(--r8) 0;padding:10px 6px;writing-mode:vertical-rl;font-size:11px;font-weight:600;color:var(--g500);cursor:pointer;box-shadow:2px 0 8px rgba(0,0,0,0.08);display:none;}
+.sb-reopen.on{display:flex;}.sb-reopen:hover{background:var(--coral-lt);color:var(--coral-dk);}
+@media(max-width:768px){.sidebar{transform:translateX(calc(-1 * var(--sb)));}.sidebar.open{transform:translateX(0);}.content{margin-left:0!important;}.sb-toggle{display:flex;}.sb-reopen{display:none!important;}}
+@media(min-width:769px){.sb-toggle{display:none;}}
+.sb-top{padding:16px 16px 12px;border-bottom:1px solid var(--bdr);}
+.sb-logo{font-size:15px;font-weight:700;}
+.sb-user{margin-top:8px;display:flex;align-items:center;gap:8px;}
+.av{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;background:var(--teal-lt);color:var(--teal-dk);}
+.sb-name{font-size:12px;font-weight:600;color:var(--g600);}
+.sb-role{font-size:10px;color:var(--g400);}
+.sb-nav{flex:1;padding:8px 0;overflow-y:auto;}
+.nav-sec{font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--g300);padding:10px 16px 3px;text-transform:uppercase;}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 16px;font-size:13px;color:var(--g500);cursor:pointer;border-left:2.5px solid transparent;transition:all .15s;}
+.nav-item:hover{background:var(--g50);color:var(--g800);}
+.nav-item.on{background:var(--coral-lt);color:var(--coral-dk);font-weight:600;border-left-color:var(--coral);}
+.nav-dot{width:5px;height:5px;border-radius:50%;background:currentColor;opacity:.5;flex-shrink:0;}
+.nav-item.on .nav-dot{opacity:1;}
+.sb-collapse{display:flex;align-items:center;justify-content:flex-end;padding:8px 12px;border-top:1px solid var(--bdr);font-size:11px;color:var(--g400);cursor:pointer;}
+.sb-collapse:hover{background:var(--g50);}
+.sb-bottom{padding:10px 14px;border-top:1px solid var(--bdr);margin-top:auto;}
+.btn-logout{width:100%;padding:7px;border-radius:var(--r8);border:1px solid var(--bdr-md);background:var(--white);color:var(--g500);font-size:12px;}
+.btn-logout:hover{background:var(--g50);color:var(--red);}
+
+/* CONTENT */
+.ci{padding:24px;max-width:680px;}
+.topbar{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;gap:12px;flex-wrap:wrap;}
+.ph{font-size:18px;font-weight:700;}.ps{font-size:13px;color:var(--g400);margin-top:2px;}
+
+/* CARD */
+.card{background:var(--white);border:1px solid var(--bdr);border-radius:var(--r12);padding:18px;margin-bottom:14px;}
+.card-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:8px;}
+.card-title{font-size:12px;font-weight:700;color:var(--g400);text-transform:uppercase;letter-spacing:.06em;}
+.card-act{font-size:12px;color:var(--coral);cursor:pointer;font-weight:500;}
+.dr{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--g100);font-size:13px;gap:8px;}
+.dr:last-child{border-bottom:none;}
+.dl{color:var(--g400);font-size:12px;flex-shrink:0;min-width:110px;}
+.dv{color:var(--g800);font-weight:500;text-align:right;display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end;}
+
+/* BADGES */
+.bw{background:var(--amber-lt);color:var(--amber);}
+.bok{background:var(--teal-lt);color:var(--teal-dk);}
+.bg{background:var(--g100);color:var(--g500);}
+.bi{background:var(--blue-lt);color:var(--blue-dk);}
+.bc{background:var(--coral-lt);color:var(--coral-dk);}
+.bdg{display:inline-flex;align-items:center;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap;}
+
+/* ALERT */
+.al{display:flex;align-items:flex-start;gap:10px;padding:11px 14px;border-radius:var(--r8);font-size:12px;margin-bottom:14px;line-height:1.5;}
+.al-w{background:var(--amber-lt);border:1px solid #EDBA5A;color:#7A5010;}
+.al-ok{background:var(--teal-lt);border:1px solid #7ECAAA;color:var(--teal-dk);}
+.al-i{background:var(--blue-lt);border:1px solid #9DC5EE;color:var(--blue-dk);}
+.al-icon{font-size:15px;flex-shrink:0;margin-top:1px;}
+
+/* BUTTONS */
+.btn{padding:7px 14px;border-radius:var(--r8);font-size:12px;font-weight:500;border:1px solid var(--bdr-md);background:var(--white);color:var(--g800);transition:all .15s;display:inline-flex;align-items:center;gap:5px;white-space:nowrap;cursor:pointer;}
+.btn:hover{background:var(--g50);}
+.btn-p{background:var(--coral);color:var(--white);border-color:var(--coral);}.btn-p:hover{background:var(--coral-dk);}
+.btn-t{background:var(--teal);color:var(--white);border-color:var(--teal);}
+.btn-sm{padding:4px 10px;font-size:11px;}
+.bg-row{display:flex;gap:8px;flex-wrap:wrap;}
+.copy-btn{padding:2px 8px;border-radius:4px;border:1px solid var(--bdr-md);background:var(--g50);font-size:11px;color:var(--g500);cursor:pointer;}
+.copy-btn:hover{background:var(--coral-lt);color:var(--coral);}
+
+/* STATUS VIEW */
+.sv{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--g100);font-size:13px;}
+.sv:last-child{border-bottom:none;}
+.sv.clickable{cursor:pointer;border-radius:var(--r8);}
+.sv.clickable:hover{background:var(--g50);margin:0 -6px;padding:9px 6px;}
+.sv-lbl{color:var(--g500);font-size:12px;min-width:120px;}
+.sv-val{flex:1;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.sv-sub{font-size:11px;color:var(--g400);}
+.si{width:18px;height:18px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;}
+.si-ok{background:var(--teal-lt);color:var(--teal-dk);}
+.si-w{background:var(--amber-lt);color:var(--amber);}
+.si-no{background:var(--g100);color:var(--g400);}
+
+/* UPLOAD */
+.upload-zone{border:2px dashed var(--g200);border-radius:var(--r8);padding:18px;text-align:center;color:var(--g400);font-size:12px;cursor:pointer;transition:all .2s;margin-top:8px;}
+.upload-zone:hover{border-color:var(--coral);color:var(--coral);background:var(--coral-lt);}
+.upload-done{background:var(--teal-lt);border:1px solid #7ECAAA;border-radius:var(--r8);padding:10px 14px;display:flex;align-items:center;gap:10px;font-size:12px;color:var(--teal-dk);margin-top:8px;}
+
+/* CONTRACT */
+.contract-body{font-size:12px;line-height:1.9;color:var(--g800);max-height:340px;overflow-y:auto;border:1px solid var(--bdr);border-radius:var(--r8);padding:14px;background:var(--g50);margin-bottom:14px;}
+.contract-art{margin-bottom:10px;}.contract-art-t{font-weight:700;margin-bottom:3px;}.contract-art-b{padding-left:1.2em;}.contract-art-b p{margin-bottom:2px;}
+.sig-block{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:12px;padding-top:12px;border-top:1px solid var(--g200);font-size:12px;line-height:2;}
+.sig-party-b{background:var(--g50);border:1px solid var(--bdr);border-radius:var(--r8);padding:10px;}
+
+/* REG */
+.reg-wrap{min-height:100vh;background:var(--g100);padding:32px 16px;}
+.reg-card{background:var(--white);border:1px solid var(--bdr);border-radius:var(--r16);padding:32px;max-width:640px;margin:0 auto;box-shadow:var(--shadow);}
+.sec-title{font-size:12px;font-weight:700;color:var(--g400);text-transform:uppercase;letter-spacing:.06em;margin:18px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--g100);}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+@media(max-width:520px){.form-grid{grid-template-columns:1fr;}.sig-block{grid-template-columns:1fr;}}
+
+/* REQUIRED */
+.req{color:var(--red);}
+
+/* PDF PREV */
+.pdf-prev{background:var(--g50);border:1px solid var(--bdr);border-radius:var(--r8);padding:12px 14px;display:flex;align-items:center;gap:12px;}
+.pdf-icon{width:36px;height:44px;background:var(--red-lt);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:var(--red);flex-shrink:0;}
+
+/* RULES */
+.rules-body{font-size:12px;color:var(--g600);line-height:1.9;}.rules-body p{margin-bottom:5px;}
+
+/* LOADING */
+.loading{display:flex;align-items:center;gap:8px;color:var(--g400);font-size:13px;padding:16px;}
+.spinner{width:18px;height:18px;border:2px solid var(--g200);border-top-color:var(--coral);border-radius:50%;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1A1917;color:#fff;padding:10px 20px;border-radius:var(--r8);font-size:13px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:999;max-width:90vw;text-align:center;}
+.toast.show{opacity:1;}
+</style>
+</head>
+<body>
+
+<!-- 前台登入 -->
+<div id="pg-login" class="pg on">
+  <div class="lw"><div class="lc">
+    <div class="logo"><span class="lem">檸檬</span>家事</div>
+    <div class="logo-sub">承攬人員系統</div>
+    <span class="lbadge">新人 / 承攬人員登入</span>
+    <div class="err" id="login-err"></div>
+    <div class="fi">
+      <label>身份證字號 <span class="req">*</span></label>
+      <input id="f-id" type="text" placeholder="A123456789" oninput="this.value=this.value.toUpperCase().replace(/[^A-Z0-9]/g,'')">
+    </div>
+    <div class="fi">
+      <label>手機號碼後 4 碼 <span class="req">*</span></label>
+      <input id="f-tel" type="text" inputmode="numeric" placeholder="1234" maxlength="4" oninput="this.value=this.value.replace(/\D/g,'')">
+      <div class="hint">初次登入密碼為手機號碼後 4 碼</div>
+    </div>
+    <button class="btn-full" id="login-btn" onclick="doLogin()">登入</button>
+    <div class="sw">還沒有帳號?<a onclick="showReg()">填寫基本資料申請開通</a></div>
+  </div></div>
+</div>
+
+<!-- 新人填寫資料 -->
+<div id="pg-register" class="pg">
+  <div class="reg-wrap"><div class="reg-card">
+    <div style="font-size:20px;font-weight:700;margin-bottom:4px"><span class="lem">檸檬</span>家事</div>
+    <div style="font-size:13px;color:var(--g400);margin-bottom:24px">新人基本資料填寫 <span class="req">*</span> 為必填欄位</div>
+    <div class="err" id="reg-err"></div>
+
+    <div class="sec-title">個人基本資料</div>
+    <div class="form-grid">
+      <div class="fi"><label>姓名 <span class="req">*</span></label><input id="r-name" type="text"></div>
+      <div class="fi"><label>身份證字號 <span class="req">*</span></label><input id="r-id" type="text" oninput="this.value=this.value.toUpperCase().replace(/[^A-Z0-9]/g,'')"></div>
+      <div class="fi">
+        <label>出生年月日(民國)<span class="req">*</span></label>
+        <input id="r-dob" type="text" inputmode="numeric" placeholder="YY/MM/DD" maxlength="8" oninput="autoSlashDob(this)">
+        <div class="fmt-hint">格式:YY/MM/DD,例如 85/06/15</div>
+      </div>
+      <div class="fi">
+        <label>手機號碼 <span class="req">*</span></label>
+        <input id="r-phone" type="tel" inputmode="numeric" placeholder="0912345678" oninput="this.value=this.value.replace(/\D/g,'')">
+        <div class="hint">請填 10 碼數字,勿含 - 或空格</div>
+      </div>
+      <div class="fi"><label>電子郵件 <span class="req">*</span></label><input id="r-email" type="email" placeholder="your@email.com"></div>
+      <div class="fi" style="grid-column:1/-1"><label>聯絡地址 <span class="req">*</span></label><input id="r-addr" type="text" placeholder="台北市大安區…"></div>
+    </div>
+
+    <div class="sec-title">緊急聯絡人(必填)</div>
+    <div class="form-grid">
+      <div class="fi"><label>姓名 <span class="req">*</span></label><input id="r-ec-name" type="text"></div>
+      <div class="fi"><label>關係 <span class="req">*</span></label><input id="r-ec-rel" type="text" placeholder="父 / 母 / 配偶…"></div>
+      <div class="fi" style="grid-column:1/-1">
+        <label>手機號碼 <span class="req">*</span></label>
+        <input id="r-ec-phone" type="tel" inputmode="numeric" placeholder="0912345678" oninput="this.value=this.value.replace(/\D/g,'')">
+      </div>
+    </div>
+
+    <div class="sec-title">其他資料(必填)</div>
+    <div class="form-grid">
+      <div class="fi"><label>交通工具 <span class="req">*</span></label>
+        <select id="r-transport"><option value="">— 請選擇 —</option><option value="騎車">騎車</option><option value="開車">開車</option><option value="大眾交通工具">大眾交通工具</option></select>
+      </div>
+      <div class="fi"><label>新冠疫苗接種 <span class="req">*</span></label>
+        <select id="r-vaccine"><option value="">— 請選擇 —</option><option value="有・第 1 劑">有・第 1 劑</option><option value="有・第 2 劑">有・第 2 劑</option><option value="有・第 3 劑">有・第 3 劑</option><option value="有・第 4 劑以上">有・第 4 劑以上</option><option value="無">無</option></select>
+      </div>
+      <div class="fi"><label>服務地區 <span class="req">*</span></label>
+        <select id="r-region"><option value="">載入中…</option></select>
+      </div>
+      <div class="fi"><label>介紹人姓名</label><input id="r-referrer" type="text" placeholder="如無請留空"></div>
+    </div>
+
+    <div class="al al-i" style="margin-top:8px"><span class="al-icon">ℹ</span><div>填寫送出後由管理員審核;審核通過即可以"身份證字號 + 手機後 4 碼"登入系統.</div></div>
+    <div style="display:flex;gap:10px;margin-top:8px">
+      <button class="btn" onclick="showPg('pg-login')" style="flex:1">← 返回登入</button>
+      <button class="btn btn-p" id="reg-btn" onclick="doRegister()" style="flex:2">送出資料</button>
+    </div>
+  </div></div>
+</div>
+
+<!-- 送出成功 -->
+<div id="pg-reg-done" class="pg">
+  <div class="lw"><div class="lc" style="text-align:center">
+    <div style="font-size:40px;margin-bottom:12px">✅</div>
+    <div style="font-size:18px;font-weight:700;margin-bottom:8px">資料已送出!</div>
+    <div style="font-size:13px;color:var(--g500);line-height:1.7;margin-bottom:24px">感謝您填寫基本資料.<br>管理員審核通過後即可登入系統.<br><br>請記住:<br>帳號:<strong>您的身份證字號</strong><br>密碼:<strong>手機號碼後 4 碼</strong></div>
+    <button class="btn-full" onclick="showPg('pg-login')">返回登入頁</button>
+  </div></div>
+</div>
+
+<!-- 主系統 -->
+<div id="pg-main" class="pg">
+  <button class="sb-toggle" onclick="openSb()">☰</button>
+  <div class="overlay" id="overlay" onclick="closeSb()"></div>
+  <div class="sb-reopen" id="sb-reopen" onclick="expandSb()">◀ 展開</div>
+
+  <div class="sidebar" id="sidebar">
+    <div class="sb-top">
+      <div class="sb-logo"><span class="lem">檸檬</span>家事 · 新人中心</div>
+      <div class="sb-user"><div class="av" id="nav-av">?</div><div><div class="sb-name" id="nav-name">載入中…</div><div class="sb-role" id="nav-role"></div></div></div>
+    </div>
+    <div class="sb-nav">
+      <div class="nav-sec">我的資料</div>
+      <div class="nav-item on" id="n-overview" onclick="go('overview',this)"><div class="nav-dot"></div>個人總覽</div>
+      <div class="nav-item" id="n-profile" onclick="go('profile',this)"><div class="nav-dot"></div>個人資料</div>
+      <div class="nav-item" id="n-rules" onclick="go('rules',this)"><div class="nav-dot"></div>團隊規章</div>
+      <div class="nav-item" id="n-contract" onclick="go('contract',this)"><div class="nav-dot"></div>居間承攬契約</div>
+      <div class="nav-item" id="n-docs" onclick="go('docs',this)"><div class="nav-dot"></div>證件提供</div>
+      <div class="nav-item" id="n-bank" onclick="go('bank',this)"><div class="nav-dot"></div>銀行帳號</div>
+      <div class="nav-sec">押金</div>
+      <div class="nav-item" id="n-deposit" onclick="go('deposit',this)"><div class="nav-dot"></div>押金繳交</div>
+      <div class="nav-item" id="n-refund" onclick="go('refund',this)"><div class="nav-dot"></div>押金退款申請</div>
+    </div>
+    <div class="sb-collapse" onclick="collapseSb()">◀ 收合選單</div>
+    <div class="sb-bottom"><button class="btn-logout" onclick="doLogout()">登出</button></div>
+  </div>
+
+  <div class="content" id="main-content">
+    <div class="ci">
+
+      <!-- 個人總覽 -->
+      <div id="p-overview" class="fp">
+        <div class="topbar"><div><div class="ph">個人總覽</div><div class="ps" id="ov-sub"></div></div></div>
+        <div class="al al-w" id="ov-alert" style="display:none"><span class="al-icon">⚠</span><div id="ov-alert-msg"></div></div>
+        <div class="card">
+          <div class="card-hd"><div class="card-title">建檔狀態總覽</div></div>
+          <div id="ov-list"><div class="loading"><div class="spinner"></div>載入中…</div></div>
+        </div>
+      </div>
+
+      <!-- 個人資料 -->
+      <div id="p-profile" class="fp" style="display:none">
+        <div class="topbar"><div><div class="ph">個人資料</div></div></div>
+        <div class="card">
+          <div class="card-hd"><div class="card-title">基本資料</div></div>
+          <div id="profile-rows"><div class="loading"><div class="spinner"></div>載入中…</div></div>
+        </div>
+      </div>
+
+      <!-- 團隊規章 -->
+      <div id="p-rules" class="fp" style="display:none">
+        <div class="topbar"><div><div class="ph">團隊規章</div></div></div>
+        <div class="al al-ok" id="rules-ok" style="display:none"><span class="al-icon">✓</span><div id="rules-ok-msg"></div></div>
+        <div class="al al-w" id="rules-todo" style="display:none"><span class="al-icon">⚠</span><div>請詳閱以下規章後點選同意.</div></div>
+        <div class="card"><div class="card-hd"><div class="card-title">A · 協議基本規範</div></div><div class="rules-body">
+          <p><strong>1.</strong> 媒合前需繳交:承攬契約,身份證正反面,良民證正本(新訓後 2 週內).</p>
+          <p><strong>2.</strong> 報酬 200 元/時,正式上線 280 元/時起,通過考核依序調整.</p>
+          <p><strong>3.</strong> 每月可承攬時段不足 6 個/週,每小時減少 20 元.(目前暫不執行)</p>
+          <p><strong>4.</strong> 累積 80 場次退還工具包押金 2,000 元,僅此乙次.</p>
+          <p><strong>5.</strong> 案場僅拍局部前後照,不可拍全室照;照片外流公司保留法律追訴權益.</p>
+          <p><strong>6.</strong> 服務期間任何問題請立即回報業務負責人,責任歸屬以 Line 時間記錄為依據.</p>
+          <p><strong>7.</strong> 每月 1–3 號提供次月可服務時段;每晚 7 點確認隔日服務資訊.</p>
+          <p><strong>8.</strong> 調度使用公司器材,使用後清理完畢並確認配件齊全;損壞照原廠送修費用賠償.</p>
+          <p><strong>9.</strong> 承攬工作過程請勿使用手機處理私人事務.</p>
+          <p><strong>10.</strong> 不得承接公司指派之外之同性質勞務.</p>
+        </div></div>
+        <div class="card"><div class="card-hd"><div class="card-title">B · 違反協議罰則</div></div><div class="rules-body">
+          <p><strong>1.</strong> 未調派指定器材造成工作不完整,罰款 500 元/人.</p>
+          <p><strong>2.</strong> 每月簽收單於次月 15 號前繳回;逾期每場罰款 100 元.</p>
+          <p><strong>3.</strong> 因個人故意行為導致退款,賠償商譽損失 2,000 元;嚴重者立即終止合作.</p>
+          <p><strong>4.</strong> 客訴確認成立,客戶不接受原承攬人員處理,罰款 300 元/時.</p>
+          <p><strong>5.</strong> 疏失造成物品損壞:公司負擔 30%,當事人負擔 70%;故意損壞全額負擔.</p>
+        </div></div>
+        <div class="card"><div class="card-hd"><div class="card-title">C · 額外報酬制度</div></div><div class="rules-body">
+          <p><strong>1.</strong> 銷售 VIP 儲值金:每 5 萬元獎金 800 元,由當次服務人員均分.</p>
+          <p><strong>2.</strong> 激勵報酬:依接班時數,客訴次數,例會出席發放車馬津貼 500–1,500 元.</p>
+          <p><strong>3.</strong> 介紹報酬:達標滿 80 場次後獲得 1,000 元,次月發放.</p>
+        </div></div>
+        <div class="card"><div class="card-hd"><div class="card-title">D · 無法履行個別承攬工作之程序</div></div><div class="rules-body">
+          <p><strong>1.</strong> 變更出席:通知業務負責人 → 尋找職務代理人 → 代理人補貼 300 元.</p>
+          <p><strong>2.</strong> 緊急事由:三日內提出證明,免負擔代理費;否則視同無故未到.</p>
+          <p><strong>3.</strong> 無故未到:罰款 500 元起,次數累計加倍,記錄永不歸零.</p>
+          <p><strong>4.</strong> 早退:未經客戶同意提早結束,罰款 1 小時時薪.</p>
+          <p><strong>5.</strong> 終止合作:需完成已媒合案場並繳回清潔工具包,方可結束合作.</p>
+        </div></div>
+        <div class="card" id="rules-agree-card">
+          <div style="display:flex;align-items:center;gap:10px;font-size:13px;font-weight:500;">
+            <input type="checkbox" id="rules-cb" style="width:16px;height:16px;accent-color:var(--coral);">
+            <label for="rules-cb">我已詳閱並同意所有協議規章</label>
+          </div>
+          <button class="btn btn-p" style="margin-top:12px;width:100%" onclick="doAgreeRules()">確認同意</button>
+        </div>
+      </div>
+
+      <!-- 居間承攬契約 -->
+      <div id="p-contract" class="fp" style="display:none">
+        <div class="topbar"><div><div class="ph">居間承攬契約</div></div></div>
+        <div class="al al-ok" id="ct-ok" style="display:none"><span class="al-icon">✓</span><div id="ct-ok-msg"></div></div>
+        <div class="al al-w" id="ct-todo" style="display:none"><span class="al-icon">⚠</span><div>請詳閱以下契約後點選確認同意.</div></div>
+        <div class="al al-i" id="ct-wait" style="display:none"><span class="al-icon">ℹ</span><div>契約尚未生成,請等待管理員審核開通帳號後再確認.</div></div>
+        <div class="card">
+          <div class="card-hd"><div class="card-title">契約資訊</div></div>
+          <div id="ct-info"></div>
+          <div class="pdf-prev" id="ct-pdf" style="display:none;margin-top:12px">
+            <div class="pdf-icon">HTML</div>
+            <div style="flex:1"><div id="ct-pdf-name" style="font-size:12px;font-weight:600"></div><div style="font-size:11px;color:var(--g400)">含線上同意記錄</div></div>
+            <a id="ct-pdf-link" class="btn btn-sm" target="_blank">⬡ 開啟</a>
+          </div>
+        </div>
+        <div class="card" id="ct-content" style="display:none">
+          <div class="card-hd"><div class="card-title">居間承攬契約全文</div></div>
+          <div class="contract-body">
+            <div class="contract-art"><div class="contract-art-t">第一條 合約期間</div><div class="contract-art-b"><p>1. 中華民國 115 年 4 月 1 日至 116 年 3 月 31 日止,共計一年.</p><p>2. 期滿後以相同條件自動展延一年;任一方欲終止應於前一個月告知他方.</p></div></div>
+            <div class="contract-art"><div class="contract-art-t">第二條 媒合方式說明</div><div class="contract-art-b"><p>1. 乙方同意每月前 3 個日曆天提供下月可媒合之勞務時段.</p><p>2. 媒合成立時乙方與甲方客戶之間成立承攬契約;乙方得自行決定是否承接,甲方不得干涉.</p></div></div>
+            <div class="contract-art"><div class="contract-art-t">第三條 勞務報酬計算與給付</div><div class="contract-art-b"><p>乙方同意甲方自總費用中抽取 35–50% 媒合費用;甲方每月 10 日及 20 日分別結算代收勞務款,遇例假日順延.</p></div></div>
+            <div class="contract-art"><div class="contract-art-t">第四條 承攬服務要求</div><div class="contract-art-b"><p>乙方不得故意或過失損壞或偷竊甲方客戶物品;偷竊者甲方得解除本約並請求損害賠償.</p></div></div>
+            <div class="contract-art"><div class="contract-art-t">第五條至第八條</div><div class="contract-art-b"><p>無法履行程序,保密條款,管轄法院(台灣台北地方法院),附則悉依民法承攬章節辦理.</p></div></div>
+            <div class="sig-block">
+              <div>
+                <div style="font-weight:700;margin-bottom:4px">甲方:檸檬專業清潔有限公司</div>
+                <div>負責人:謝曜聲 統一編號:42627791</div>
+                <div style="margin-top:6px"><svg width="52" height="52" viewBox="0 0 80 80"><circle cx="40" cy="40" r="38" fill="none" stroke="#C0392B" stroke-width="2.5"/><circle cx="40" cy="40" r="30" fill="none" stroke="#C0392B" stroke-width="1.2"/><text x="40" y="26" font-size="7" fill="#C0392B" text-anchor="middle" font-weight="700">檸檬專業清潔</text><text x="40" y="37" font-size="7" fill="#C0392B" text-anchor="middle" font-weight="700">有限公司</text><text x="40" y="50" font-size="8.5" fill="#C0392B" text-anchor="middle" font-weight="700">謝曜聲</text></svg></div>
+              </div>
+              <div class="sig-party-b">
+                <div style="font-weight:700;margin-bottom:6px">乙方(您的資料)</div>
+                <div id="ct-pb-name"></div><div id="ct-pb-id"></div>
+                <div id="ct-pb-addr"></div><div id="ct-pb-phone"></div>
+                <div style="font-size:11px;color:var(--g400);margin-top:6px;padding-top:6px;border-top:1px dashed var(--g200)">點選同意後系統自動記錄時間</div>
+              </div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;font-size:13px;font-weight:500;">
+            <input type="checkbox" id="ct-cb" style="width:16px;height:16px;accent-color:var(--coral);">
+            <label for="ct-cb">我已詳閱全文並同意簽署本居間承攬契約</label>
+          </div>
+          <button class="btn btn-p" style="margin-top:12px;width:100%" onclick="doSignContract()">確認同意並簽署</button>
+        </div>
+      </div>
+
+      <!-- 證件提供 -->
+      <div id="p-docs" class="fp" style="display:none">
+        <div class="topbar"><div><div class="ph">證件提供</div></div></div>
+        <div class="card">
+          <div class="card-hd"><div class="card-title">身份證</div><span id="doc-id-badge" class="bdg bw">待上傳</span></div>
+          <div id="doc-front-area"><div class="upload-zone" onclick="triggerUpload('ID_FRONT')">📷 上傳身份證正面(JPG/PNG,10MB 以內)</div></div>
+          <div style="height:10px"></div>
+          <div id="doc-back-area"><div class="upload-zone" onclick="triggerUpload('ID_BACK')">📷 上傳身份證反面(JPG/PNG,10MB 以內)</div></div>
+        </div>
+        <div class="card">
+          <div class="card-hd"><div class="card-title">良民證</div><span id="doc-gc-badge" class="bdg bg">未繳</span></div>
+          <div class="al al-i"><span class="al-icon">ℹ</span><div>需繳交正本(出生至今,無犯罪紀錄),此處上傳掃描檔供管理員預覽;正本請親自或郵寄至公司.</div></div>
+          <div id="doc-gc-area"><div class="upload-zone" onclick="triggerUpload('GOOD_CONDUCT')">📎 上傳良民證掃描檔(JPG/PNG/PDF)</div></div>
+        </div>
+        <input type="file" id="file-input" style="display:none" accept="image/jpeg,image/png,application/pdf" onchange="handleFileUpload()">
+      </div>
+
+      <!-- 銀行帳號 -->
+      <div id="p-bank" class="fp" style="display:none">
+        <div class="topbar"><div><div class="ph">銀行帳號</div><div class="ps">報酬匯款帳戶</div></div></div>
+        <div class="card" id="bank-view">
+          <div class="card-hd"><div class="card-title">匯款帳戶</div><div class="card-act" onclick="showBankForm()">修改</div></div>
+          <div id="bank-rows"></div>
+          <div style="font-size:11px;color:var(--g400);margin-top:8px">若非富邦銀行將酌收 $15 手續費.</div>
+        </div>
+        <div class="card" id="bank-form" style="display:none">
+          <div class="card-hd"><div class="card-title">填寫帳戶資料</div></div>
+          <div class="form-grid">
+            <div class="fi"><label>銀行名稱 <span class="req">*</span></label><input id="bk-name" type="text" placeholder="富邦銀行"></div>
+            <div class="fi"><label>銀行代碼</label><input id="bk-code" type="text" placeholder="012" maxlength="3" inputmode="numeric" oninput="this.value=this.value.replace(/\D/g,'')"></div>
+            <div class="fi" style="grid-column:1/-1"><label>銀行帳號 <span class="req">*</span></label><input id="bk-acc" type="text" placeholder="(純數字)" inputmode="numeric" oninput="this.value=this.value.replace(/\D/g,'')"></div>
+            <div class="fi" style="grid-column:1/-1"><label>持有人姓名 <span class="req">*</span></label><input id="bk-holder" type="text"></div>
+          </div>
+          <div class="bg-row">
+            <button class="btn" onclick="hideBankForm()">取消</button>
+            <button class="btn btn-p" onclick="doUpdateBank()">儲存帳號</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 押金繳交 -->
+      <div id="p-deposit" class="fp" style="display:none">
+        <div class="topbar"><div><div class="ph">工具包押金繳交</div></div></div>
+        <div class="card">
+          <div class="dr"><span class="dl">應繳金額</span><span class="dv" style="font-size:16px;font-weight:700">$2,000</span></div>
+          <div class="dr"><span class="dl">收款銀行</span><span class="dv" id="dep-bank">富邦銀行(012)</span></div>
+          <div class="dr"><span class="dl">收款帳號</span><span class="dv"><span id="dep-acc">載入中…</span><button class="copy-btn" onclick="copyEl('dep-acc')">複製</button></span></div>
+          <div class="dr"><span class="dl">戶名</span><span class="dv">檸檬家事有限公司</span></div>
+          <div style="font-size:11px;color:var(--g400);margin-top:8px">以上帳號由管理員維護,如有疑問請聯絡業務負責人.</div>
+        </div>
+        <div class="card">
+          <div class="card-hd"><div class="card-title">填寫匯款資料</div></div>
+          <div class="al al-ok" id="dep-ok" style="display:none"><span class="al-icon">✓</span><div id="dep-ok-msg"></div></div>
+          <div id="dep-form">
+            <div class="al al-i"><span class="al-icon">ℹ</span><div>匯款後請填寫以下資料,管理員對帳確認後即完成.</div></div>
+            <div class="form-grid">
+              <div class="fi"><label>匯款日期 <span class="req">*</span></label><input type="date" id="dep-date"></div>
+              <div class="fi"><label>匯款時間(大約)</label><input type="time" id="dep-time"></div>
+              <div class="fi"><label>匯款帳號後 5 碼 <span class="req">*</span></label><input type="text" id="dep-last5" placeholder="12345" maxlength="5" inputmode="numeric" oninput="this.value=this.value.replace(/\D/g,'')"></div>
+              <div class="fi"><label>匯款金額</label><input type="number" id="dep-amount" value="2000"></div>
+            </div>
+            <button class="btn btn-p" onclick="doSubmitDeposit()">送出匯款資料</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 押金退款 -->
+      <div id="p-refund" class="fp" style="display:none">
+        <div class="topbar"><div><div class="ph">押金退款申請</div></div></div>
+        <div class="card">
+          <div class="card-hd"><div class="card-title">押金狀態</div><span id="ref-dep-badge" class="bdg bg">確認中</span></div>
+          <div id="ref-dep-info"></div>
+        </div>
+        <div class="card" id="ref-form" style="display:none">
+          <div class="card-hd"><div class="card-title">退款資料填寫</div></div>
+          <div class="al al-i"><span class="al-icon">ℹ</span><div>退款金額由管理員審核確認,實際退款可能依情況調整.</div></div>
+          <div class="form-grid">
+            <div class="fi" style="grid-column:1/-1">
+              <label>退款銀行名稱</label>
+              <input type="text" id="rf-bank" style="background:var(--blue-lt);border-color:#9DC5EE" readonly>
+              <div class="hint" style="color:var(--blue-dk)">✦ 自動帶入您的銀行資料</div>
+            </div>
+            <div class="fi" style="grid-column:1/-1">
+              <label>退款帳號</label>
+              <input type="text" id="rf-acc" style="background:var(--blue-lt);border-color:#9DC5EE" readonly>
+              <div class="hint" style="color:var(--blue-dk)">✦ 自動帶入您的銀行資料</div>
+            </div>
+            <div class="fi"><label>申請退款金額 <span class="req">*</span></label><input type="number" id="rf-amount" placeholder="2000"></div>
+          </div>
+          <div class="fi"><label>備註說明</label><textarea id="rf-note" style="width:100%;padding:8px 10px;border:1px solid var(--bdr-md);border-radius:var(--r8);font-size:13px;resize:none;height:72px;font-family:var(--font)"></textarea></div>
+          <button class="btn btn-p" style="margin-top:8px" onclick="doApplyRefund()">送出退款申請</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ════════════════════
+//  狀態
+// ════════════════════
+let TOKEN = '';
+let PROFILE = null;
+let _uploadType = '';
+
+// ════════════════════
+//  API 呼叫(fetch POST)
+//  回傳 Promise<result>
+// ════════════════════
+const API_URL = 'https://script.google.com/a/macros/lemonclean.com.tw/s/AKfycbxQ5cTV1a8o3c8eJf2qvoC1S2sxrC5q4Tw9Sy9xzyrnrSdJ3HslQHCy2vxjRDyGABuq/exec';
+
+async function run(action, data) {
+  try {
+    // 用 GET + URL 參數呼叫(最穩定,無 CORS 問題)
+    const params = new URLSearchParams({ action });
+    if (data) {
+      Object.entries(data).forEach(([k, v]) => {
+        params.set(k, typeof v === 'object' ? JSON.stringify(v) : v);
+      });
+    }
+    const url = API_URL + '?' + params.toString();
+    const res = await fetch(url, { redirect: 'follow' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const text = await res.text();
+    // 如果回傳的是 HTML(不是 JSON),代表部署設定有問題
+    if (text.trim().startsWith('<')) {
+      throw new Error('回傳了 HTML 而非 JSON,請確認已重新部署並更新為新版本');
+    }
+    return JSON.parse(text);
+  } catch(e) {
+    return { ok: false, error: '連線失敗:' + e.message };
+  }
+}
+
+// ════════════════════
+//  頁面切換
+// ════════════════════
+function showPg(id) { document.querySelectorAll('.pg').forEach(p=>p.classList.remove('on')); document.getElementById(id).classList.add('on'); }
+function showReg()  { loadRegions(); showPg('pg-register'); }
+
+function go(name, el) {
+  document.querySelectorAll('.fp').forEach(p=>p.style.display='none');
+  document.getElementById('p-'+name).style.display = 'block';
+  if (el) { document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('on')); el.classList.add('on'); }
+  closeSb();
+  const loaders = { overview:renderOverview, profile:renderProfile, rules:renderRules, contract:renderContract, docs:renderDocs, bank:renderBank, deposit:renderDeposit, refund:renderRefund };
+  if (loaders[name]) loaders[name]();
+}
+
+function openSb()    { document.getElementById('sidebar').classList.add('open'); document.getElementById('overlay').classList.add('on'); }
+function closeSb()   { document.getElementById('sidebar').classList.remove('open'); document.getElementById('overlay').classList.remove('on'); }
+function collapseSb(){ document.getElementById('sidebar').classList.add('hidden'); document.getElementById('main-content').classList.add('wide'); document.getElementById('sb-reopen').classList.add('on'); }
+function expandSb()  { document.getElementById('sidebar').classList.remove('hidden'); document.getElementById('main-content').classList.remove('wide'); document.getElementById('sb-reopen').classList.remove('on'); }
+
+// ════════════════════
+//  登入
+// ════════════════════
+async function doLogin() {
+  const id  = document.getElementById('f-id').value.trim();
+  const tel = document.getElementById('f-tel').value.trim();
+  if (!id || !tel) { showErr('login-err','請填寫身份證字號與手機號碼後 4 碼'); return; }
+  hideErr('login-err');
+  setBtnLoading('login-btn', true);
+
+  const r = await run('staffLogin', {idNumber:id, phone:tel});
+  setBtnLoading('login-btn', false);
+  if (!r.ok) { showErr('login-err', r.error); return; }
+
+  TOKEN = r.token;
+  document.getElementById('nav-name').textContent = r.name;
+  document.getElementById('nav-role').textContent = r.region;
+  document.getElementById('nav-av').textContent   = r.name.charAt(0);
+
+  await loadProfile();
+  showPg('pg-main');
+  go('overview', document.getElementById('n-overview'));
+}
+
+async function doLogout() {
+  await run('logout', {token:TOKEN});
+  TOKEN = ''; PROFILE = null;
+  showPg('pg-login');
+}
+
+// ════════════════════
+//  新人填寫資料
+// ════════════════════
+async function loadRegions() {
+  const r = await run('getRegionNames', {});
+  const sel = document.getElementById('r-region');
+  if (r.ok && r.regions && r.regions.length > 0) {
+    sel.innerHTML = '<option value="">— 請選擇 —</option>' + r.regions.map(n=>`<option value="${n}">${n}</option>`).join('');
+  } else {
+    sel.innerHTML = '<option value="">— 請選擇 —</option><option value="台北">台北</option>';
+  }
+}
+
+function autoSlashDob(el) {
+  let v = el.value.replace(/\D/g,'');
+  if (v.length > 6) v = v.slice(0,6);
+  if (v.length >= 5) v = v.slice(0,2)+'/'+v.slice(2,4)+'/'+v.slice(4);
+  else if (v.length >= 3) v = v.slice(0,2)+'/'+v.slice(2);
+  el.value = v;
+}
+
+async function doRegister() {
+  const data = {
+    '姓名': v('r-name'), '身份證字號': v('r-id'), '出生年月日': v('r-dob'),
+    '手機號碼': v('r-phone'), '電子郵件': v('r-email'), '聯絡地址': v('r-addr'),
+    '緊急聯絡人姓名': v('r-ec-name'), '緊急聯絡人關係': v('r-ec-rel'),
+    '緊急聯絡人電話': v('r-ec-phone'), '交通工具': v('r-transport'),
+    '新冠疫苗': v('r-vaccine'), '服務地區': v('r-region'), '介紹人': v('r-referrer'),
+  };
+  setBtnLoading('reg-btn', true);
+  const r = await run('registerNewbie', {data});
+  setBtnLoading('reg-btn', false);
+  if (!r.ok) { showErr('reg-err', r.error); return; }
+  showPg('pg-reg-done');
+}
+
+// ════════════════════
+//  載入個人資料
+// ════════════════════
+async function loadProfile() {
+  const r = await run('getMyProfile', {token:TOKEN});
+  if (!r.ok) return;
+  PROFILE = r;
+}
+
+// ════════════════════
+//  個人總覽
+// ════════════════════
+function renderOverview() {
+  if (!PROFILE) return;
+  const { staff, rules, contract, docs, bank, deposit } = PROFILE;
+  document.getElementById('ov-sub').textContent = staff.name + ' · ' + staff.region;
+
+  const pending = [];
+  let html = '<div class="sv"><div class="si si-ok">✓</div><div class="sv-lbl">個人基本資料</div><div class="sv-val"><span class="bdg bok">已完成</span></div></div>';
+
+  html += ovRow('n-rules', 'rules', rules?'ok':'warn',
+    rules?'✓':'!', '團隊規章',
+    rules?`<span class="bdg bok">已同意</span><span class="sv-sub">${rules['同意時間']}</span>`:`<span class="bdg bw">尚未同意</span><span class="sv-sub" style="color:var(--coral)">→ 前往</span>`,
+    !rules);
+  if (!rules) pending.push('同意團隊規章');
+
+  const ctStatus = contract ? contract['狀態'] : null;
+  html += ovRow('n-contract', 'contract',
+    ctStatus==='已簽署'?'ok':ctStatus?'warn':'no',
+    ctStatus==='已簽署'?'✓':ctStatus?'!':'—', '居間承攬契約',
+    ctStatus==='已簽署'?`<span class="bdg bok">已簽署</span>`:ctStatus?`<span class="bdg bw">${ctStatus}</span><span class="sv-sub" style="color:var(--coral)">→ 前往</span>`:`<span class="bdg bg">待生成</span>`,
+    ctStatus && ctStatus!=='已簽署');
+  if (ctStatus && ctStatus!=='已簽署') pending.push('簽署居間承攬契約');
+
+  const idf = docs.idFront, idb = docs.idBack;
+  const idOk = idf && idf['審核狀態']==='APPROVED';
+  html += ovRow('n-docs','docs', idf?'warn':'warn', '!','身份證正面', idf?`<span class="bdg ${idf['審核狀態']==='APPROVED'?'bok':'bw'}">${idf['審核狀態']==='APPROVED'?'已審核':'待審核'}</span>`:`<span class="bdg bw">待上傳</span><span class="sv-sub" style="color:var(--coral)">→ 前往</span>`, !idf);
+  html += ovRow('n-docs','docs', idb?'warn':'warn', '!','身份證反面', idb?`<span class="bdg ${idb['審核狀態']==='APPROVED'?'bok':'bw'}">${idb['審核狀態']==='APPROVED'?'已審核':'待審核'}</span>`:`<span class="bdg bw">待上傳</span><span class="sv-sub" style="color:var(--coral)">→ 前往</span>`, !idb);
+  if (!idf) pending.push('上傳身份證正面');
+  if (!idb) pending.push('上傳身份證反面');
+
+  const gc = docs.gc;
+  html += ovRow('n-docs','docs', gc&&gc['審核狀態']==='APPROVED'?'ok':'no', gc&&gc['審核狀態']==='APPROVED'?'✓':'—','良民證',
+    gc&&gc['審核狀態']==='APPROVED'?`<span class="bdg bok">已確認</span>`:gc?`<span class="bdg bw">待確認</span>`:`<span class="bdg bg">未繳</span><span class="sv-sub">新訓後 2 週內繳交</span>`, !gc);
+
+  html += ovRow('n-bank','bank', bank?'ok':'warn', bank?'✓':'!','銀行帳號',
+    bank?`<span class="bdg bok">已設定</span><span class="sv-sub">${bank['銀行名稱']}</span>`:`<span class="bdg bw">待填寫</span><span class="sv-sub" style="color:var(--coral)">→ 前往</span>`, !bank);
+  if (!bank) pending.push('填寫銀行帳號');
+
+  const dep = deposit;
+  html += ovRow('n-deposit','deposit', dep&&dep['對帳狀態']==='已對帳'?'ok':dep?'no':'warn',
+    dep&&dep['對帳狀態']==='已對帳'?'✓':dep?'—':'!', '工具包押金',
+    dep&&dep['對帳狀態']==='已對帳'?`<span class="bdg bok">已繳交確認</span>`:dep?`<span class="bdg bw">待對帳確認</span>`:`<span class="bdg bg">未繳</span><span class="sv-sub" style="color:var(--coral)">→ 前往</span>`,
+    !dep);
+  if (!dep) pending.push('繳交工具包押金');
+
+  document.getElementById('ov-list').innerHTML = html;
+
+  const alert = document.getElementById('ov-alert');
+  if (pending.length > 0) {
+    alert.style.display = 'flex';
+    document.getElementById('ov-alert-msg').textContent = `您有 ${pending.length} 項待完成:${pending.join(',')}`;
+  } else {
+    alert.style.display = 'none';
+  }
+}
+
+function ovRow(navId, goId, status, icon, label, valHtml, clickable) {
+  const siClass = status==='ok'?'si-ok':status==='warn'?'si-w':'si-no';
+  const labelStyle = clickable ? 'color:var(--coral)' : '';
+  const onclick = clickable ? `onclick="go('${goId}',document.getElementById('${navId}'))"` : '';
+  return `<div class="sv${clickable?' clickable':''}" ${onclick}>
+    <div class="si ${siClass}">${icon}</div>
+    <div class="sv-lbl" style="${labelStyle}">${label}</div>
+    <div class="sv-val">${valHtml}</div>
+  </div>`;
+}
+
+// ════════════════════
+//  個人資料
+// ════════════════════
+function renderProfile() {
+  if (!PROFILE) return;
+  const s = PROFILE.staff;
+  const rows = [
+    ['姓名',s.name],['身份證字號',s.idNumber],['出生年月日',s.dob||'—'],
+    ['手機號碼',s.phone],['電子郵件',s.email||'—'],['聯絡地址',s.address||'—'],
+    ['緊急聯絡人',`${s.emergencyName||'—'}(${s.emergencyRel||'—'}) ${s.emergencyPhone||'—'}`],
+    ['交通工具',s.transport||'—'],['新冠疫苗',s.vaccine||'—'],
+    ['服務地區',s.region],['帳號狀態',`<span class="bdg bok">${s.status}</span>`],
+    ['時薪','$'+s.hourlyRate+' / 時'],
+  ];
+  document.getElementById('profile-rows').innerHTML = rows.map(([l,v])=>mkDr(l,v)).join('');
+}
+
+// ════════════════════
+//  規章
+// ════════════════════
+function renderRules() {
+  if (!PROFILE) return;
+  const rules = PROFILE.rules;
+  if (rules) {
+    setEl('rules-ok','flex');
+    document.getElementById('rules-ok-msg').textContent = `已於 ${rules['同意時間']} 同意本規章.版本:${rules['規章版本']}`;
+    setEl('rules-todo','none'); setEl('rules-agree-card','none');
+  } else {
+    setEl('rules-ok','none'); setEl('rules-todo','flex'); setEl('rules-agree-card','block');
+  }
+}
+
+async function doAgreeRules() {
+  if (!document.getElementById('rules-cb').checked) { toast('請先勾選確認已閱讀'); return; }
+  const r = await run('agreeRules', {token:TOKEN});
+  if (!r.ok) { toast(r.error); return; }
+  await loadProfile(); renderRules(); renderOverview(); toast('✓ 已同意團隊規章');
+}
+
+// ════════════════════
+//  契約
+// ════════════════════
+function renderContract() {
+  if (!PROFILE) return;
+  const { staff, contract } = PROFILE;
+  setEl('ct-ok','none'); setEl('ct-todo','none'); setEl('ct-wait','none'); setEl('ct-content','none'); setEl('ct-pdf','none');
+
+  document.getElementById('ct-pb-name').textContent  = '姓名:' + staff.name;
+  document.getElementById('ct-pb-id').textContent    = '身份證字號:' + staff.idNumber;
+  document.getElementById('ct-pb-addr').textContent  = '現居地址:' + (staff.address||'—');
+  document.getElementById('ct-pb-phone').textContent = '連絡電話:' + staff.phone;
+
+  if (!contract) {
+    setEl('ct-wait','flex');
+    document.getElementById('ct-info').innerHTML = mkDr('狀態','<span class="bdg bg">尚未生成</span>');
+    return;
+  }
+
+  document.getElementById('ct-info').innerHTML =
+    mkDr('狀態',`<span class="bdg ${contract['狀態']==='已簽署'?'bok':'bw'}">${contract['狀態']}</span>`) +
+    mkDr('生成時間', contract['生成時間']) +
+    (contract['簽署時間'] ? mkDr('線上同意時間', contract['簽署時間']) : '');
+
+  if (contract['狀態']==='已簽署') {
+    setEl('ct-ok','flex');
+    document.getElementById('ct-ok-msg').textContent = `契約已於 ${contract['簽署時間']} 線上確認同意.`;
+    if (contract['Drive檔案ID']) {
+      setEl('ct-pdf','flex');
+      document.getElementById('ct-pdf-name').textContent = `檸檬家事居間承攬契約_${staff.region}_${staff.name}.html`;
+      document.getElementById('ct-pdf-link').href = `https://drive.google.com/file/d/${contract['Drive檔案ID']}/view`;
+    }
+  } else {
+    setEl('ct-todo','flex'); setEl('ct-content','block');
+  }
+}
+
+async function doSignContract() {
+  if (!document.getElementById('ct-cb').checked) { toast('請先勾選確認已閱讀'); return; }
+  const r = await run('signContract', {token:TOKEN});
+  if (!r.ok) { toast(r.error); return; }
+  await loadProfile(); renderContract(); renderOverview(); toast('✓ 居間承攬契約簽署完成!');
+}
+
+// ════════════════════
+//  文件上傳
+// ════════════════════
+function renderDocs() {
+  if (!PROFILE) return;
+  const { idFront: idf, idBack: idb, gc } = PROFILE.docs;
+  const mk = (doc) => doc
+    ? `<div class="upload-done">✓ 已上傳 · ${doc['審核狀態']==='APPROVED'?'審核通過':'待審核'}<button class="copy-btn" style="margin-left:auto" onclick="triggerUpload('${doc['文件類型']}')">重新上傳</button></div>`
+    : null;
+  if (idf) document.getElementById('doc-front-area').innerHTML = mk(idf);
+  if (idb) document.getElementById('doc-back-area').innerHTML  = mk(idb);
+  if (gc)  document.getElementById('doc-gc-area').innerHTML    = mk(gc);
+  const idBadge = idf&&idb ? (idf['審核狀態']==='APPROVED'&&idb['審核狀態']==='APPROVED'?'已審核':'待審核') : '待上傳';
+  const idCls   = idf&&idb ? (idf['審核狀態']==='APPROVED'&&idb['審核狀態']==='APPROVED'?'bok':'bw') : 'bw';
+  document.getElementById('doc-id-badge').className = 'bdg '+idCls;
+  document.getElementById('doc-id-badge').textContent = idBadge;
+  document.getElementById('doc-gc-badge').className = 'bdg '+(gc&&gc['審核狀態']==='APPROVED'?'bok':gc?'bw':'bg');
+  document.getElementById('doc-gc-badge').textContent = gc&&gc['審核狀態']==='APPROVED'?'已確認':gc?'待確認':'未繳';
+}
+
+function triggerUpload(t) { _uploadType=t; document.getElementById('file-input').click(); }
+
+async function handleFileUpload() {
+  const file = document.getElementById('file-input').files[0];
+  if (!file) return;
+  if (file.size > 10*1024*1024) { toast('檔案不可超過 10MB'); return; }
+  toast('上傳中,請稍候…');
+  const b64 = await fileToB64(file);
+  const r = await run('uploadDoc', {token:TOKEN, docType:_uploadType, fileData:b64, fileName:file.name});
+  if (!r.ok) { toast('上傳失敗:'+r.error); return; }
+  await loadProfile(); renderDocs(); renderOverview(); toast('✓ 上傳成功!');
+  document.getElementById('file-input').value='';
+}
+
+function fileToB64(file) {
+  return new Promise(res=>{ const r=new FileReader(); r.onload=e=>res(e.target.result.split(',')[1]); r.readAsDataURL(file); });
+}
+
+// ════════════════════
+//  銀行帳號
+// ════════════════════
+function renderBank() {
+  if (!PROFILE) return;
+  const bank = PROFILE.bank;
+  if (bank) {
+    document.getElementById('bank-rows').innerHTML =
+      mkDr('銀行名稱',bank['銀行名稱']) +
+      mkDr('銀行帳號',`<span id="bk-el">${bank['銀行帳號']}</span><button class="copy-btn" onclick="copyEl('bk-el')">複製</button>`) +
+      mkDr('持有人',bank['持有人']);
+  } else {
+    document.getElementById('bank-rows').innerHTML='<div style="font-size:13px;color:var(--g400);padding:8px 0">尚未設定銀行帳號</div>';
+    showBankForm();
+  }
+  if (PROFILE.bank) {
+    const rfb=document.getElementById('rf-bank'), rfa=document.getElementById('rf-acc');
+    if(rfb) rfb.value = bank['銀行名稱'];
+    if(rfa) rfa.value = bank['銀行帳號'];
+  }
+}
+function showBankForm() { setEl('bank-form','block'); }
+function hideBankForm() { setEl('bank-form','none'); }
+
+async function doUpdateBank() {
+  const bank = { bankName:v('bk-name'), bankCode:v('bk-code'), account:v('bk-acc'), holder:v('bk-holder') };
+  if (!bank.bankName||!bank.account||!bank.holder) { toast('請填寫銀行名稱,帳號和持有人'); return; }
+  const r = await run('updateMyBank', {token:TOKEN, bank});
+  if (!r.ok) { toast(r.error); return; }
+  await loadProfile(); renderBank(); hideBankForm(); toast('✓ 銀行帳號已儲存');
+}
+
+// ════════════════════
+//  押金
+// ════════════════════
+function renderDeposit() {
+  if (!PROFILE) return;
+  const ri = PROFILE.regionInfo;
+  if (ri) { document.getElementById('dep-bank').textContent=ri.depBank||'富邦銀行(012)'; document.getElementById('dep-acc').textContent=ri.depAccount||'(請洽業務負責人)'; }
+  const dep = PROFILE.deposit;
+  if (dep) {
+    setEl('dep-ok','flex');
+    document.getElementById('dep-ok-msg').textContent = dep['對帳狀態']==='已對帳'
+      ? `押金已於 ${dep['對帳時間']} 確認收款完成.`
+      : `匯款資料已送出,等待管理員對帳確認(帳號後5碼:${dep['帳號後5碼']})`;
+    setEl('dep-form','none');
+  }
+}
+
+async function doSubmitDeposit() {
+  const dep = { remitDate:v('dep-date'), remitTime:v('dep-time'), lastFive:v('dep-last5'), amount:v('dep-amount')||2000 };
+  if (!dep.remitDate||!dep.lastFive) { toast('請填寫匯款日期和帳號後5碼'); return; }
+  const r = await run('submitDeposit', {token:TOKEN, dep});
+  if (!r.ok) { toast(r.error); return; }
+  await loadProfile(); renderDeposit(); renderOverview(); toast('✓ 匯款資料已送出');
+}
+
+// ════════════════════
+//  押金退款
+// ════════════════════
+function renderRefund() {
+  if (!PROFILE) return;
+  const dep=PROFILE.deposit, bank=PROFILE.bank;
+  const bdg=document.getElementById('ref-dep-badge');
+  const info=document.getElementById('ref-dep-info');
+  const form=document.getElementById('ref-form');
+  if (!dep) {
+    bdg.className='bdg bg'; bdg.textContent='未繳';
+    info.innerHTML='<div style="font-size:13px;color:var(--g400);padding:8px 0">押金尚未繳交</div>';
+    setEl('ref-form','none'); return;
+  }
+  if (dep['對帳狀態']==='已對帳') {
+    bdg.className='bdg bok'; bdg.textContent='已繳交';
+    info.innerHTML = mkDr('狀態','<span class="bdg bok">已確認</span>')+mkDr('對帳完成',dep['對帳時間']);
+    if (dep['退款申請時間']) {
+      form.innerHTML=`<div class="al al-ok"><span class="al-icon">✓</span><div>退款申請已於 ${dep['退款申請時間']} 送出,等待審核.</div></div>`;
+      setEl('ref-form','block');
+    } else {
+      setEl('ref-form','block');
+      if (bank) { document.getElementById('rf-bank').value=bank['銀行名稱']; document.getElementById('rf-acc').value=bank['銀行帳號']; }
+    }
+  } else {
+    bdg.className='bdg bw'; bdg.textContent='待確認';
+    info.innerHTML=mkDr('狀態','<span class="bdg bw">等待管理員確認</span>');
+    setEl('ref-form','none');
+  }
+}
+
+async function doApplyRefund() {
+  const rd = { bankName:v('rf-bank'), account:v('rf-acc'), amount:v('rf-amount'), note:v('rf-note') };
+  if (!rd.bankName||!rd.account||!rd.amount) { toast('請填寫完整退款資料'); return; }
+  const r = await run('applyRefund', {token:TOKEN, rd});
+  if (!r.ok) { toast(r.error); return; }
+  await loadProfile(); renderRefund(); toast('✓ 退款申請已送出');
+}
+
+// ════════════════════
+//  工具
+// ════════════════════
+function v(id)          { const el=document.getElementById(id); return el?el.value.trim():''; }
+function setEl(id,d)    { const el=document.getElementById(id); if(el)el.style.display=d; }
+function mkDr(l,v_)     { return `<div class="dr"><span class="dl">${l}</span><span class="dv">${v_}</span></div>`; }
+function copyEl(id)     { const t=document.getElementById(id); if(t)navigator.clipboard.writeText(t.textContent.trim()).then(()=>toast('已複製')); }
+function showErr(id,m)  { const el=document.getElementById(id); el.textContent=m; el.style.display='block'; }
+function hideErr(id)    { document.getElementById(id).style.display='none'; }
+
+function setBtnLoading(id, loading) {
+  const btn = document.getElementById(id);
+  if (!btn) return;
+  btn.disabled = loading;
+  btn.textContent = loading ? '處理中…' : (id==='login-btn'?'登入':'送出資料');
+}
+
+let _tt=null;
+function toast(msg) { const el=document.getElementById('toast'); el.textContent=msg; el.classList.add('show'); clearTimeout(_tt); _tt=setTimeout(()=>el.classList.remove('show'),2800); }
+</script>
+</body>
+</html>

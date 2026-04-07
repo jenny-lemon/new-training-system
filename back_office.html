@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>檸檬家事 · 管理後台</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --coral:#D85A30;--coral-lt:#FAECE7;--coral-dk:#7A2E10;
+  --teal:#1D9E75;--teal-lt:#E1F5EE;--teal-dk:#0A5C42;
+  --blue:#378ADD;--blue-lt:#E6F1FB;--blue-dk:#0C447C;
+  --amber:#BA7517;--amber-lt:#FAEEDA;
+  --red:#C0392B;--red-lt:#FCEAEA;
+  --g50:#F9F8F4;--g100:#F0EDE6;--g200:#E0DDD5;--g300:#C8C5BC;
+  --g400:#9E9B93;--g500:#6B6862;--g600:#3E3C38;--g800:#1A1917;
+  --white:#FFF;--bdr:rgba(0,0,0,0.09);--bdr-md:rgba(0,0,0,0.14);
+  --r8:8px;--r12:12px;--r16:16px;
+  --font:'Noto Sans TC',sans-serif;--shadow:0 2px 16px rgba(0,0,0,0.08);--sb:210px;
+}
+body{font-family:var(--font);background:var(--g100);color:var(--g800);font-size:14px;line-height:1.6;}
+button,input,select,textarea{font-family:var(--font);}button{cursor:pointer;}a{color:var(--blue);}
+.pg{display:none;min-height:100vh;}.pg.on{display:block;}
+
+/* LOGIN */
+.lw{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:var(--g100);}
+.lc{background:var(--white);border:1px solid var(--bdr);border-radius:var(--r16);padding:40px 36px;width:100%;max-width:400px;box-shadow:var(--shadow);}
+.logo{font-size:22px;font-weight:700;margin-bottom:4px;}.lem{color:var(--coral);}
+.logo-sub{font-size:13px;color:var(--g400);margin-bottom:28px;}
+.lbadge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;margin-bottom:20px;background:var(--blue-lt);color:var(--blue-dk);}
+.fi{margin-bottom:14px;}.fi label{display:block;font-size:12px;font-weight:500;color:var(--g500);margin-bottom:5px;}
+.fi input,.fi select,.fi textarea{width:100%;padding:9px 12px;border:1px solid var(--bdr-md);border-radius:var(--r8);font-size:13px;outline:none;transition:border-color .15s;color:var(--g800);background:var(--white);}
+.fi input:focus,.fi select:focus{border-color:var(--coral);}
+.fi .hint{font-size:11px;color:var(--g400);margin-top:4px;}
+.btn-full{width:100%;padding:11px;border-radius:var(--r8);background:var(--coral);color:var(--white);font-size:14px;font-weight:600;border:none;margin-top:8px;}
+.btn-full:hover{background:var(--coral-dk);}
+.btn-full:disabled{background:var(--g300);cursor:not-allowed;}
+.err{background:var(--red-lt);border:1px solid #E8A9A9;border-radius:var(--r8);padding:9px 12px;font-size:12px;color:var(--red);margin-bottom:12px;display:none;}
+
+/* SHELL */
+.shell{display:flex;min-height:100vh;position:relative;}
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.35);z-index:50;}.overlay.on{display:block;}
+.sidebar{background:var(--white);border-right:1px solid var(--bdr);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;width:var(--sb);z-index:60;transition:transform .25s;overflow-y:auto;}
+.sidebar.hidden{transform:translateX(calc(-1 * var(--sb)));}
+.content{flex:1;background:var(--g50);margin-left:var(--sb);transition:margin-left .25s;min-height:100vh;}.content.wide{margin-left:0;}
+.sb-toggle{position:fixed;top:12px;left:12px;z-index:70;width:36px;height:36px;border-radius:var(--r8);background:var(--white);border:1px solid var(--bdr-md);display:none;align-items:center;justify-content:center;font-size:18px;color:var(--g600);box-shadow:var(--shadow);cursor:pointer;}
+.sb-reopen{position:fixed;top:50%;left:0;z-index:65;transform:translateY(-50%);background:var(--white);border:1px solid var(--bdr-md);border-left:none;border-radius:0 var(--r8) var(--r8) 0;padding:10px 6px;writing-mode:vertical-rl;font-size:11px;font-weight:600;color:var(--g500);cursor:pointer;box-shadow:2px 0 8px rgba(0,0,0,0.08);display:none;}
+.sb-reopen.on{display:flex;}.sb-reopen:hover{background:var(--coral-lt);color:var(--coral-dk);}
+@media(max-width:768px){.sidebar{transform:translateX(calc(-1 * var(--sb)));}.sidebar.open{transform:translateX(0);}.content{margin-left:0!important;}.sb-toggle{display:flex;}.sb-reopen{display:none!important;}}
+@media(min-width:769px){.sb-toggle{display:none;}}
+.sb-top{padding:16px 16px 12px;border-bottom:1px solid var(--bdr);}
+.sb-logo{font-size:15px;font-weight:700;}
+.sb-user{margin-top:8px;display:flex;align-items:center;gap:8px;}
+.av{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;background:var(--blue-lt);color:var(--blue-dk);}
+.sb-name{font-size:12px;font-weight:600;color:var(--g600);}.sb-role{font-size:10px;color:var(--g400);}
+.sb-nav{flex:1;padding:8px 0;overflow-y:auto;}
+.nav-group{}
+.nav-sec{font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--g300);padding:10px 16px 3px;text-transform:uppercase;display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;}
+.nav-sec-arrow{font-size:10px;transition:transform .2s;}.nav-sec-arrow.open{transform:rotate(180deg);}
+.nav-items{overflow:hidden;max-height:500px;transition:max-height .25s;}.nav-items.closed{max-height:0;}
+.nav-item{display:flex;align-items:center;gap:9px;padding:7px 16px;font-size:13px;color:var(--g500);cursor:pointer;border-left:2.5px solid transparent;transition:all .15s;}
+.nav-item:hover{background:var(--g50);color:var(--g800);}
+.nav-item.on{background:var(--coral-lt);color:var(--coral-dk);font-weight:600;border-left-color:var(--coral);}
+.nav-dot{width:5px;height:5px;border-radius:50%;background:currentColor;opacity:.5;flex-shrink:0;}.nav-item.on .nav-dot{opacity:1;}
+.nb{margin-left:auto;background:var(--coral);color:var(--white);border-radius:10px;font-size:10px;font-weight:700;padding:1px 7px;}
+.sb-collapse{display:flex;align-items:center;justify-content:flex-end;padding:8px 12px;border-top:1px solid var(--bdr);font-size:11px;color:var(--g400);cursor:pointer;}.sb-collapse:hover{background:var(--g50);}
+.sb-bottom{padding:10px 14px;border-top:1px solid var(--bdr);margin-top:auto;}
+.btn-logout{width:100%;padding:7px;border-radius:var(--r8);border:1px solid var(--bdr-md);background:var(--white);color:var(--g500);font-size:12px;}.btn-logout:hover{background:var(--g50);color:var(--red);}
+
+/* CONTENT */
+.ci{padding:24px;max-width:1100px;}
+.topbar{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;gap:12px;flex-wrap:wrap;}
+.ph{font-size:18px;font-weight:700;}.ps{font-size:13px;color:var(--g400);margin-top:2px;}
+.card{background:var(--white);border:1px solid var(--bdr);border-radius:var(--r12);padding:18px;margin-bottom:14px;}
+.card-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:8px;}
+.card-title{font-size:12px;font-weight:700;color:var(--g400);text-transform:uppercase;letter-spacing:.06em;}
+.card-act{font-size:12px;color:var(--coral);cursor:pointer;font-weight:500;}
+.dr{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--g100);font-size:13px;gap:8px;}
+.dr:last-child{border-bottom:none;}
+.dl{color:var(--g400);font-size:12px;flex-shrink:0;min-width:120px;}
+.dv{color:var(--g800);font-weight:500;text-align:right;display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end;}
+.bw{background:var(--amber-lt);color:var(--amber);}.bok{background:var(--teal-lt);color:var(--teal-dk);}
+.bg{background:var(--g100);color:var(--g500);}.bi{background:var(--blue-lt);color:var(--blue-dk);}
+.bc{background:var(--coral-lt);color:var(--coral-dk);}
+.bdg{display:inline-flex;align-items:center;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap;}
+.al{display:flex;align-items:flex-start;gap:10px;padding:11px 14px;border-radius:var(--r8);font-size:12px;margin-bottom:14px;line-height:1.5;}
+.al-w{background:var(--amber-lt);border:1px solid #EDBA5A;color:#7A5010;}
+.al-ok{background:var(--teal-lt);border:1px solid #7ECAAA;color:var(--teal-dk);}
+.al-i{background:var(--blue-lt);border:1px solid #9DC5EE;color:var(--blue-dk);}
+.al-icon{font-size:15px;flex-shrink:0;margin-top:1px;}
+.btn{padding:7px 14px;border-radius:var(--r8);font-size:12px;font-weight:500;border:1px solid var(--bdr-md);background:var(--white);color:var(--g800);transition:all .15s;display:inline-flex;align-items:center;gap:5px;white-space:nowrap;cursor:pointer;}
+.btn:hover{background:var(--g50);}
+.btn-p{background:var(--coral);color:var(--white);border-color:var(--coral);}.btn-p:hover{background:var(--coral-dk);}
+.btn-t{background:var(--teal);color:var(--white);border-color:var(--teal);}
+.btn-b{background:var(--blue);color:var(--white);border-color:var(--blue);}
+.btn-sm{padding:4px 10px;font-size:11px;}.btn-r{color:var(--red);border-color:var(--red);}.btn-r:hover{background:var(--red-lt);}
+.bg-row{display:flex;gap:8px;flex-wrap:wrap;}
+.copy-btn{padding:2px 8px;border-radius:4px;border:1px solid var(--bdr-md);background:var(--g50);font-size:11px;color:var(--g500);cursor:pointer;}.copy-btn:hover{background:var(--coral-lt);color:var(--coral);}
+.tbl{width:100%;border-collapse:collapse;font-size:12px;}
+.tbl th{text-align:left;padding:8px 10px;color:var(--g400);font-weight:600;font-size:11px;border-bottom:1px solid var(--bdr);background:var(--g50);white-space:nowrap;}
+.tbl td{padding:8px 10px;border-bottom:1px solid var(--g100);vertical-align:middle;}
+.tbl tr:last-child td{border-bottom:none;}.tbl tr:hover td{background:var(--g50);}
+.tbl .nm{font-weight:600;color:var(--g800);}.tbl-link{color:var(--coral);font-weight:500;cursor:pointer;}
+.search-bar{display:flex;align-items:center;gap:8px;background:var(--white);border:1px solid var(--bdr-md);border-radius:var(--r8);padding:7px 12px;margin-bottom:14px;}
+.search-bar input{border:none;outline:none;font-family:var(--font);font-size:13px;flex:1;background:transparent;}
+.pagi{display:flex;align-items:center;gap:10px;padding:10px 14px;font-size:12px;color:var(--g400);}
+.img-ph{background:var(--g100);border:1px solid var(--bdr);border-radius:4px;height:100px;display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--g400);}
+.id-bar{background:var(--blue-lt);border:1px solid #9DC5EE;border-radius:var(--r8);padding:12px 14px;margin-bottom:12px;display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.id-bar-item .ib-label{font-size:10px;font-weight:700;color:var(--blue-dk);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;}
+.id-bar-item .ib-value{font-size:14px;font-weight:700;color:var(--g800);}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:200;display:flex;align-items:flex-start;justify-content:center;padding:24px;overflow-y:auto;}
+.modal-box{background:var(--white);border-radius:var(--r16);width:100%;max-width:680px;box-shadow:0 8px 40px rgba(0,0,0,0.18);flex-shrink:0;}
+.modal-head{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--bdr);}
+.modal-title{font-size:15px;font-weight:700;}.modal-close{background:none;border:none;font-size:22px;color:var(--g400);cursor:pointer;}
+.modal-body{padding:20px;}.modal-foot{padding:14px 20px;border-top:1px solid var(--bdr);display:flex;gap:10px;justify-content:flex-end;}
+.tabs{display:flex;border-bottom:1px solid var(--bdr);margin-bottom:16px;overflow-x:auto;}
+.tab{padding:8px 16px;font-size:13px;cursor:pointer;border-bottom:2px solid transparent;color:var(--g400);background:none;border-top:none;border-left:none;border-right:none;transition:all .15s;white-space:nowrap;}
+.tab.on{color:var(--coral-dk);border-bottom-color:var(--coral);font-weight:600;}
+.tab-panel{display:none;}.tab-panel.on{display:block;}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+@media(max-width:520px){.form-grid{grid-template-columns:1fr;}}
+.loading{display:flex;align-items:center;gap:8px;color:var(--g400);font-size:13px;padding:12px 0;}
+.spinner{width:16px;height:16px;border:2px solid var(--g200);border-top-color:var(--coral);border-radius:50%;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1A1917;color:#fff;padding:10px 20px;border-radius:var(--r8);font-size:13px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:999;max-width:90vw;text-align:center;}.toast.show{opacity:1;}
+</style>
+</head>
+<body>
+
+<!-- 管理員登入 -->
+<div id="pg-login" class="pg on">
+  <div class="lw"><div class="lc">
+    <div class="logo"><span class="lem">檸檬</span>家事</div>
+    <div class="logo-sub">管理後台</div>
+    <span class="lbadge">管理員登入</span>
+    <div class="err" id="login-err"></div>
+    <div class="fi"><label>管理員 Email</label><input id="a-email" type="email"></div>
+    <div class="fi"><label>密碼</label><input id="a-pwd" type="password"></div>
+    <button class="btn-full" id="login-btn" onclick="doLogin()">登入後台</button>
+    <div id="debug-area" style="margin-top:16px;font-size:12px;color:var(--g500);text-align:center">
+      <button onclick="runDiag()" style="background:none;border:1px solid var(--bdr-md);padding:5px 12px;border-radius:6px;font-size:11px;color:var(--g400);cursor:pointer">🔧 診斷連線</button>
+      <div id="diag-result" style="margin-top:10px;text-align:left;"></div>
+    </div>
+  </div></div>
+</div>
+
+<!-- 後台主系統 -->
+<div id="pg-main" class="pg">
+  <button class="sb-toggle" onclick="openSb()">☰</button>
+  <div class="overlay" id="overlay" onclick="closeSb()"></div>
+  <div class="sb-reopen" id="sb-reopen" onclick="expandSb()">◀ 展開</div>
+
+  <div class="sidebar" id="sidebar">
+    <div class="sb-top">
+      <div class="sb-logo"><span class="lem">檸檬</span>家事 · 後台</div>
+      <div class="sb-user"><div class="av">管</div><div><div class="sb-name" id="nav-name">管理員</div><div class="sb-role" id="nav-role"></div></div></div>
+    </div>
+    <div class="sb-nav">
+      <div class="nav-group">
+        <div class="nav-sec" onclick="toggleGroup(this)">新人帳號 <span class="nav-sec-arrow open">▾</span></div>
+        <div class="nav-items">
+          <div class="nav-item on" id="n-accounts" onclick="go('accounts',this)"><div class="nav-dot"></div>新人帳號管理<span class="nb" id="nb-pending">0</span></div>
+        </div>
+      </div>
+      <div class="nav-group">
+        <div class="nav-sec" onclick="toggleGroup(this)">新人管理 <span class="nav-sec-arrow open">▾</span></div>
+        <div class="nav-items">
+          <div class="nav-item" id="n-newbies" onclick="go('newbies',this)"><div class="nav-dot"></div>新人清單</div>
+          <div class="nav-item" id="n-docs" onclick="go('docs',this)"><div class="nav-dot"></div>證件審核<span class="nb" id="nb-docs">0</span></div>
+          <div class="nav-item" id="n-bank" onclick="go('bank',this)"><div class="nav-dot"></div>銀行帳號管理</div>
+        </div>
+      </div>
+      <div class="nav-group">
+        <div class="nav-sec" onclick="toggleGroup(this)">押金管理 <span class="nav-sec-arrow open">▾</span></div>
+        <div class="nav-items">
+          <div class="nav-item" id="n-deposit" onclick="go('deposit',this)"><div class="nav-dot"></div>匯款對帳<span class="nb" id="nb-dep">0</span></div>
+          <div class="nav-item" id="n-refund" onclick="go('refund',this)"><div class="nav-dot"></div>退款審核</div>
+        </div>
+      </div>
+      <div class="nav-group">
+        <div class="nav-sec" onclick="toggleGroup(this)">系統設定 <span class="nav-sec-arrow open">▾</span></div>
+        <div class="nav-items">
+          <div class="nav-item" id="n-admins" onclick="go('admins',this)"><div class="nav-dot"></div>管理員帳號</div>
+          <div class="nav-item" id="n-regions" onclick="go('regions',this)"><div class="nav-dot"></div>地區設定</div>
+        </div>
+      </div>
+    </div>
+    <div class="sb-collapse" onclick="collapseSb()">◀ 收合選單</div>
+    <div class="sb-bottom"><button class="btn-logout" onclick="doLogout()">登出</button></div>
+  </div>
+
+  <div class="content" id="main-content">
+    <div class="ci">
+
+      <!-- 新人帳號管理 -->
+      <div id="p-accounts" class="bp">
+        <div class="topbar"><div><div class="ph">新人帳號管理</div><div class="ps">審核新人填寫資料後開通帳號</div></div></div>
+        <div class="card">
+          <div class="card-hd"><div class="card-title">待審核開通 (<span id="pending-count">0</span>)</div></div>
+          <div class="al al-w"><span class="al-icon">⚠</span><div>審核開通後系統將<strong>立即產出居間承攬契約</strong>存至 Google Drive,新人登入即可線上簽署.</div></div>
+          <div style="overflow:auto">
+            <table class="tbl" style="min-width:700px">
+              <thead><tr><th>姓名</th><th>身份證字號</th><th>手機</th><th>Email</th><th>地區</th><th>填寫時間</th><th>操作</th></tr></thead>
+              <tbody id="pending-tbody"><tr><td colspan="7" style="text-align:center;padding:18px"><div class="loading" style="justify-content:center"><div class="spinner"></div>載入中…</div></td></tr></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card" style="padding:0;overflow:hidden">
+          <div style="padding:10px 16px;border-bottom:1px solid var(--bdr);display:flex;justify-content:space-between;align-items:center">
+            <div class="card-title">已開通帳號</div>
+            <button class="btn btn-sm" onclick="loadAccounts()">↻ 重新整理</button>
+          </div>
+          <div style="padding:10px 14px 0">
+            <div class="search-bar"><span>🔍</span><input type="text" placeholder="搜尋姓名…" oninput="filterTbl('active-tbody',this.value)"></div>
+          </div>
+          <div style="overflow:auto">
+            <table class="tbl" style="min-width:820px">
+              <thead><tr><th>姓名</th><th>身份證(帳號)</th><th>手機</th><th>Email</th><th>地區</th><th>開通日</th><th>最後登入</th><th>狀態</th><th>操作</th></tr></thead>
+              <tbody id="active-tbody"></tbody>
+            </table>
+          </div>
+          <div style="padding:8px 14px;font-size:11px;color:var(--g400)">* 退款完成後系統自動停用帳號</div>
+        </div>
+      </div>
+
+      <!-- 新人清單 -->
+      <div id="p-newbies" class="bp" style="display:none">
+        <div class="topbar"><div><div class="ph">新人清單</div></div></div>
+        <div class="search-bar"><span>🔍</span><input type="text" id="newbies-search" placeholder="搜尋姓名…" oninput="searchNewbies()"></div>
+        <div class="card" style="padding:0;overflow:auto">
+          <table class="tbl" style="min-width:880px">
+            <thead><tr><th>姓名</th><th>地區</th><th>規章</th><th>契約</th><th>身份證</th><th>良民證</th><th>銀行</th><th>押金</th><th>狀態</th><th>操作</th></tr></thead>
+            <tbody id="newbies-tbody"></tbody>
+          </table>
+          <div class="pagi"><button class="btn btn-sm" id="pg-prev" onclick="changePage(-1)" disabled>‹ 上一頁</button><span id="pg-info">—</span><button class="btn btn-sm" id="pg-next" onclick="changePage(1)" disabled>下一頁 ›</button></div>
+        </div>
+      </div>
+
+      <!-- 證件審核 -->
+      <div id="p-docs" class="bp" style="display:none">
+        <div class="topbar"><div><div class="ph">證件審核</div><div class="ps">身份證 / 良民證</div></div></div>
+        <div id="docs-list"><div class="loading"><div class="spinner"></div>載入中…</div></div>
+      </div>
+
+      <!-- 銀行帳號管理 -->
+      <div id="p-bank" class="bp" style="display:none">
+        <div class="topbar"><div><div class="ph">銀行帳號管理</div></div></div>
+        <div class="search-bar"><span>🔍</span><input type="text" placeholder="搜尋姓名…" oninput="filterTbl('bank-tbody',this.value)"></div>
+        <div class="card" style="padding:0;overflow:auto">
+          <table class="tbl">
+            <thead><tr><th>姓名</th><th>銀行</th><th>帳號</th><th>持有人</th><th>狀態</th><th>操作</th></tr></thead>
+            <tbody id="bank-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 匯款對帳 -->
+      <div id="p-deposit" class="bp" style="display:none">
+        <div class="topbar"><div><div class="ph">匯款對帳</div></div></div>
+        <div class="al al-i"><span class="al-icon">ℹ</span><div>勾選後按"批次對帳確認",系統自動記錄時間.</div></div>
+        <div class="search-bar"><span>🔍</span><input type="text" placeholder="搜尋姓名…" oninput="filterTbl('dep-tbody',this.value)"></div>
+        <div class="card" style="padding:0;overflow:auto">
+          <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--g50);border-bottom:1px solid var(--bdr)">
+            <input type="checkbox" id="dep-all" onchange="toggleAll('dep-cb',this)" style="accent-color:var(--coral)">
+            <span style="font-size:12px;color:var(--g500)">全選</span>
+            <button class="btn btn-sm btn-t" onclick="batchConfirmDeposit()" style="margin-left:8px">✓ 批次對帳確認</button>
+          </div>
+          <table class="tbl" style="min-width:680px">
+            <thead><tr><th style="width:36px"></th><th>姓名</th><th>匯款日期</th><th>時間</th><th>帳號後5碼</th><th>金額</th><th>狀態</th><th>確認時間</th><th>操作</th></tr></thead>
+            <tbody id="dep-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 退款審核 -->
+      <div id="p-refund" class="bp" style="display:none">
+        <div class="topbar"><div><div class="ph">退款審核</div></div></div>
+        <div class="al al-i"><span class="al-icon">ℹ</span><div>"審核通過"後才可"標記退款完成".退款完成後帳號將<strong>自動停用</strong>.</div></div>
+        <div class="search-bar"><span>🔍</span><input type="text" placeholder="搜尋姓名…" oninput="filterTbl('ref-tbody',this.value)"></div>
+        <div class="card" style="padding:0;overflow:auto">
+          <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--g50);border-bottom:1px solid var(--bdr);flex-wrap:wrap">
+            <input type="checkbox" id="ref-all" onchange="toggleAll('ref-cb',this)" style="accent-color:var(--coral)">
+            <span style="font-size:12px;color:var(--g500)">全選</span>
+            <button class="btn btn-sm btn-t" onclick="batchReviewRefund()" style="margin-left:8px">✓ 批次審核通過</button>
+            <button class="btn btn-sm btn-b" onclick="batchCompleteRefund()">💸 批次標記退款完成</button>
+          </div>
+          <table class="tbl" style="min-width:760px">
+            <thead><tr><th style="width:36px"></th><th>姓名</th><th>退款金額</th><th>退款銀行</th><th>退款帳號</th><th>狀態</th><th>審核時間</th><th>退款時間</th></tr></thead>
+            <tbody id="ref-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 管理員帳號 -->
+      <div id="p-admins" class="bp" style="display:none">
+        <div class="topbar"><div><div class="ph">管理員帳號</div><div class="ps">後台登入帳號管理</div></div><button class="btn btn-p btn-sm" onclick="showAdminForm()">+ 新增管理員</button></div>
+        <div class="card" id="admin-form" style="display:none">
+          <div class="card-hd"><div class="card-title">新增管理員</div><div class="card-act" onclick="hideAdminForm()">取消</div></div>
+          <div class="form-grid">
+            <div class="fi"><label>姓名 *</label><input id="adm-name" type="text"></div>
+            <div class="fi"><label>Email *</label><input id="adm-email" type="email"></div>
+            <div class="fi"><label>密碼 *(至少 6 碼)</label><input id="adm-pwd" type="password" placeholder="直接填入明碼,系統自動加密"></div>
+            <div class="fi"><label>角色</label>
+              <select id="adm-role"><option value="MANAGER">業務負責人</option><option value="SUPER">超級管理員</option></select>
+            </div>
+            <div class="fi" style="grid-column:1/-1"><label>地區權限</label>
+              <select id="adm-regions"><option value="全部地區">全部地區</option><option value="台北">台北</option><option value="台中">台中</option><option value="高雄">高雄</option></select>
+            </div>
+          </div>
+          <div class="al al-i"><span class="al-icon">ℹ</span><div>密碼請直接填入明碼(如:Lemon2025!),系統會自動加密儲存,Sheets 裡只會看到加密後的字串.</div></div>
+          <button class="btn btn-p" onclick="doCreateAdmin()">建立管理員帳號</button>
+        </div>
+        <div class="card" style="padding:0;overflow:auto">
+          <table class="tbl">
+            <thead><tr><th>姓名</th><th>Email</th><th>角色</th><th>地區權限</th><th>建立時間</th><th>最後登入</th><th>操作</th></tr></thead>
+            <tbody id="admin-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 地區設定 -->
+      <div id="p-regions" class="bp" style="display:none">
+        <div class="topbar"><div><div class="ph">地區設定</div></div></div>
+        <div id="regions-list"><div class="loading"><div class="spinner"></div>載入中…</div></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- 個人資料 Modal -->
+<div id="profile-modal" style="display:none" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-head">
+      <div class="modal-title" id="pm-title">個人資料</div>
+      <button class="modal-close" onclick="closeModal('profile-modal')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="tabs">
+        <button class="tab on" onclick="swTab('pm',0,this)">基本資料</button>
+        <button class="tab" onclick="swTab('pm',1,this)">規章/契約</button>
+        <button class="tab" onclick="swTab('pm',2,this)">文件</button>
+        <button class="tab" onclick="swTab('pm',3,this)">銀行/押金</button>
+      </div>
+      <div class="tab-panel pm on" id="pm-basic"></div>
+      <div class="tab-panel pm" id="pm-contract"></div>
+      <div class="tab-panel pm" id="pm-docs"></div>
+      <div class="tab-panel pm" id="pm-bank"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-sm btn-b" onclick="doExportHtml()">⬇ 匯出個人總覽</button>
+      <button class="btn btn-sm" onclick="closeModal('profile-modal')">關閉</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ════════════════════
+//  全域
+// ════════════════════
+let TOKEN = '';
+let _curStaffId = '';
+let _nbPage = 1;
+
+// API 呼叫(用 fetch POST 到同一個 GAS Web App URL)
+const API_URL = 'https://script.google.com/a/macros/lemonclean.com.tw/s/AKfycbxQ5cTV1a8o3c8eJf2qvoC1S2sxrC5q4Tw9Sy9xzyrnrSdJ3HslQHCy2vxjRDyGABuq/exec';
+
+async function run(action, data) {
+  try {
+    // 用 GET + URL 參數呼叫(最穩定,無 CORS 問題)
+    const params = new URLSearchParams({ action });
+    if (data) {
+      Object.entries(data).forEach(([k, v]) => {
+        params.set(k, typeof v === 'object' ? JSON.stringify(v) : v);
+      });
+    }
+    const url = API_URL + '?' + params.toString();
+    const res = await fetch(url, { redirect: 'follow' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const text = await res.text();
+    // 如果回傳的是 HTML(不是 JSON),代表部署設定有問題
+    if (text.trim().startsWith('<')) {
+      throw new Error('回傳了 HTML 而非 JSON,請確認已重新部署並更新為新版本');
+    }
+    return JSON.parse(text);
+  } catch(e) {
+    return { ok: false, error: '連線失敗:' + e.message };
+  }
+}
+
+// ════════════════════
+//  頁面
+// ════════════════════
+function showPg(id) { document.querySelectorAll('.pg').forEach(p=>p.classList.remove('on')); document.getElementById(id).classList.add('on'); }
+function go(name, el) {
+  document.querySelectorAll('.bp').forEach(p=>p.style.display='none');
+  document.getElementById('p-'+name).style.display='block';
+  if(el){document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('on'));el.classList.add('on');}
+  closeSb();
+  const m={accounts:loadAccounts,newbies:()=>loadNewbies(1),docs:loadDocs,bank:loadBank,deposit:loadDeposit,refund:loadRefund,admins:loadAdmins,regions:loadRegions};
+  if(m[name])m[name]();
+}
+function toggleGroup(sec){const it=sec.nextElementSibling;const ar=sec.querySelector('.nav-sec-arrow');it.classList.toggle('closed');ar&&ar.classList.toggle('open');}
+function openSb(){document.getElementById('sidebar').classList.add('open');document.getElementById('overlay').classList.add('on');}
+function closeSb(){document.getElementById('sidebar').classList.remove('open');document.getElementById('overlay').classList.remove('on');}
+function collapseSb(){document.getElementById('sidebar').classList.add('hidden');document.getElementById('main-content').classList.add('wide');document.getElementById('sb-reopen').classList.add('on');}
+function expandSb(){document.getElementById('sidebar').classList.remove('hidden');document.getElementById('main-content').classList.remove('wide');document.getElementById('sb-reopen').classList.remove('on');}
+function swTab(g,idx,btn){btn.closest('.modal-body').querySelectorAll('.tab-panel.'+g).forEach((p,i)=>p.classList.toggle('on',i===idx));btn.closest('.tabs').querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('on',i===idx));}
+function closeModal(id){document.getElementById(id).style.display='none';document.body.style.overflow='';}
+
+// ════════════════════
+//  登入
+// ════════════════════
+async function doLogin() {
+  const email=document.getElementById('a-email').value.trim();
+  const pwd=document.getElementById('a-pwd').value;
+  if(!email||!pwd){showErr('login-err','請填寫帳號與密碼');return;}
+  if(!email.includes('@')){showErr('login-err','Email 格式不正確');return;}
+  hideErr('login-err');
+  const btn=document.getElementById('login-btn');
+  btn.disabled=true; btn.textContent='登入中…';
+
+  let r;
+  try {
+    r = await run('apiAdminLogin',email,pwd);
+  } catch(e) {
+    btn.disabled=false; btn.textContent='登入後台';
+    showErr('login-err','系統錯誤:'+e.message);
+    return;
+  }
+
+  btn.disabled=false; btn.textContent='登入後台';
+
+  if(!r||typeof r.ok==='undefined'){
+    showErr('login-err','系統無回應,請確認 Apps Script 已正確部署(執行身份:以我的身份,存取權:所有人)');
+    return;
+  }
+  if(!r.ok){
+    showErr('login-err','❌ '+r.error);
+    return;
+  }
+  TOKEN=r.token;
+  document.getElementById('nav-name').textContent=r.name;
+  document.getElementById('nav-role').textContent=r.regions||'全地區';
+  showPg('pg-main');
+  go('accounts',document.getElementById('n-accounts'));
+}
+
+async function doLogout(){await run('apiLogout',TOKEN);TOKEN='';showPg('pg-login');}
+
+// ════════════════════
+//  帳號管理
+// ════════════════════
+async function loadAccounts(){
+  const [pr,ar]=await Promise.all([run('getPendingList',{token:TOKEN}),run('getAccountList',{token:TOKEN})]);
+  const pl=(pr.ok&&pr.list)||[];
+  document.getElementById('pending-count').textContent=pl.length;
+  document.getElementById('nb-pending').textContent=pl.length;
+  document.getElementById('pending-tbody').innerHTML=pl.length===0
+    ?'<tr><td colspan="7" style="text-align:center;color:var(--g400);padding:18px">目前無待審核新人</td></tr>'
+    :pl.map(r=>`<tr><td class="nm">${r['姓名']}</td><td style="font-family:monospace;font-size:11px">${r['身份證字號']}</td><td>${r['手機號碼']}</td><td style="font-size:11px">${r['電子郵件']||'—'}</td><td><span class="bdg bc">${r['服務地區']}</span></td><td style="font-size:11px">${r['填寫時間']}</td><td class="bg-row"><button class="btn btn-sm btn-t" onclick="doApprove('${r['ID']}','${r['姓名']}')">✓ 審核開通</button><button class="btn btn-sm btn-r" onclick="doReject('${r['ID']}','${r['姓名']}')">✕ 退回</button></td></tr>`).join('');
+  const al=(ar.ok&&ar.list)||[];
+  document.getElementById('active-tbody').innerHTML=al.length===0
+    ?'<tr><td colspan="9" style="text-align:center;color:var(--g400);padding:18px">尚無已開通帳號</td></tr>'
+    :al.map(r=>`<tr data-name="${r.name}"><td class="nm tbl-link" onclick="openProfile('${r.id}')">${r.name}</td><td style="font-family:monospace;font-size:11px">${r.idNumber}</td><td>${r.phone}</td><td style="font-size:11px">${r.email}</td><td>${r.region}</td><td style="font-size:11px">${r.approvedAt}</td><td style="font-size:11px">${r.lastLogin}</td><td><span class="bdg ${r.status==='啟用中'?'bok':'bg'}">${r.status}</span></td><td class="bg-row"><button class="btn btn-sm" onclick="doResetPwd('${r.id}','${r.name}')">重設密碼</button><button class="btn btn-sm ${r.status==='啟用中'?'btn-r':''}" onclick="doToggle('${r.id}','${r.name}')">${r.status==='啟用中'?'停用':'啟用'}</button></td></tr>`).join('');
+}
+
+async function doApprove(id,name){
+  if(!confirm(`確認審核開通 ${name}?\n開通後系統將立即產出居間承攬契約存至 Google Drive.`))return;
+  toast('處理中,正在產出契約…');
+  const r=await run('approveAccount',{token:TOKEN,pendingId:id});
+  if(!r.ok){toast('失敗:'+r.error);return;}
+  toast('✓ '+r.message); loadAccounts();
+}
+async function doReject(id,name){
+  const reason=prompt(`退回 ${name} 的申請\n原因(可留空):`); if(reason===null)return;
+  await run('rejectPending',{token:TOKEN,pendingId:id,reason}); toast(`已退回 ${name}`); loadAccounts();
+}
+async function doToggle(id,name){
+  const r=await run('toggleAccount',{token:TOKEN,staffId:id});
+  if(!r.ok){toast(r.error);return;}
+  toast(`${name} 帳號已${r.newStatus==='啟用中'?'啟用':'停用'}`); loadAccounts();
+}
+async function doResetPwd(id,name){
+  if(!confirm(`重設 ${name} 的密碼為手機後 4 碼?`))return;
+  const r=await run('resetPassword',{token:TOKEN,staffId:id});
+  if(!r.ok){toast(r.error);return;} toast(`✓ ${name} 密碼已重設`);
+}
+
+// ════════════════════
+//  新人清單
+// ════════════════════
+async function loadNewbies(pg){
+  _nbPage=pg||_nbPage;
+  const r=await run('getStaffList',{token:TOKEN,search:document.getElementById('newbies-search')?.value||'',page:_nbPage});
+  if(!r.ok){toast(r.error);return;}
+  const tb=document.getElementById('newbies-tbody');
+  tb.innerHTML=r.list.map(s=>{
+    const ct=s.contract==='已簽署'?`<span class="bdg bok">已簽署</span>`:s.contract?`<span class="bdg bw">${s.contract}</span>`:`<span class="bdg bg">—</span>`;
+    const dep=s.deposit?`<span class="bdg ${s.deposit==='已對帳'?'bok':'bw'}">${s.deposit}</span>`:`<span class="bdg bg">—</span>`;
+    return `<tr data-name="${s.name}"><td class="nm tbl-link" onclick="openProfile('${s.id}')">${s.name}</td><td>${s.region}</td>
+    <td>${s.rules?`<span class="bdg bok" style="font-size:10px">${s.rules.slice(0,10)}</span>`:`<span class="bdg bg">—</span>`}</td>
+    <td>${ct}</td>
+    <td>${s.idFront==='APPROVED'?`<span class="bdg bok">✓</span>`:s.idFront?`<span class="bdg bw">${s.idFront}</span>`:`<span class="bdg bg">—</span>`}</td>
+    <td>${s.gc==='APPROVED'?`<span class="bdg bok">✓</span>`:`<span class="bdg bg">${s.gc||'—'}</span>`}</td>
+    <td>${s.bank?`<span class="bdg bok">✓</span>`:`<span class="bdg bg">—</span>`}</td>
+    <td>${dep}</td>
+    <td><span class="bdg ${s.status==='啟用中'?'bok':'bg'}">${s.status}</span></td>
+    <td><button class="btn btn-sm btn-p" onclick="openProfile('${s.id}')">查看</button></td></tr>`;
+  }).join('')||'<tr><td colspan="10" style="text-align:center;padding:18px;color:var(--g400)">沒有資料</td></tr>';
+  const pages=Math.max(1,Math.ceil(r.total/20));
+  document.getElementById('pg-info').textContent=`第 ${_nbPage} 頁 / 共 ${pages} 頁(共 ${r.total} 筆)`;
+  document.getElementById('pg-prev').disabled=_nbPage<=1;
+  document.getElementById('pg-next').disabled=_nbPage>=pages;
+}
+function searchNewbies(){_nbPage=1;loadNewbies(1);}
+function changePage(d){loadNewbies(_nbPage+d);}
+
+// ════════════════════
+//  個人資料 Modal
+// ════════════════════
+async function openProfile(staffId){
+  _curStaffId=staffId;
+  document.getElementById('pm-title').textContent='個人資料 · 載入中…';
+  document.getElementById('profile-modal').style.display='flex';
+  document.body.style.overflow='hidden';
+  document.querySelectorAll('.tab-panel.pm').forEach((p,i)=>p.classList.toggle('on',i===0));
+  document.querySelectorAll('#profile-modal .tab').forEach((t,i)=>t.classList.toggle('on',i===0));
+
+  const r=await run('getStaffDetail',{token:TOKEN,staffId});
+  if(!r.ok){toast(r.error);closeModal('profile-modal');return;}
+  const{staff,rules,contract,allDocs,bank,deposit}=r;
+  document.getElementById('pm-title').textContent=staff.name+' · 個人資料';
+
+  document.getElementById('pm-basic').innerHTML=`<div class="card"><div class="card-hd"><div class="card-title">基本資料</div></div>
+    ${mkDr('姓名',staff.name)}${mkDr('身份證字號',`<span style="font-family:monospace">${staff.idNumber}</span>`)}
+    ${mkDr('出生年月日',staff.dob||'—')}${mkDr('手機號碼',staff.phone)}
+    ${mkDr('電子郵件',staff.email||'—')}${mkDr('聯絡地址',staff.address||'—')}
+    ${mkDr('緊急聯絡人',(staff.emergencyName||'—')+'('+(staff.emergencyRel||'—')+') '+(staff.emergencyPhone||'—'))}
+    ${mkDr('交通工具',staff.transport||'—')}${mkDr('新冠疫苗',staff.vaccine||'—')}
+    ${mkDr('服務地區',staff.region)}${mkDr('帳號狀態',`<span class="bdg ${staff.status==='啟用中'?'bok':'bg'}">${staff.status}</span>`)}
+    ${mkDr('時薪','$'+staff.hourlyRate+' / 時')}</div>`;
+
+  const ctFile=contract&&contract['Drive檔案ID']?`<a href="https://drive.google.com/file/d/${contract['Drive檔案ID']}/view" target="_blank" class="btn btn-sm">⬡ 開啟契約</a>`:'';
+  document.getElementById('pm-contract').innerHTML=`
+    <div class="card"><div class="card-hd"><div class="card-title">規章同意</div></div>
+    ${rules?mkDr('同意時間',rules['同意時間'])+mkDr('版本',rules['規章版本']):'<div style="color:var(--g400);font-size:13px;padding:8px 0">尚未同意</div>'}</div>
+    <div class="card"><div class="card-hd"><div class="card-title">居間承攬契約</div></div>
+    ${contract?mkDr('狀態',`<span class="bdg ${contract['狀態']==='已簽署'?'bok':'bw'}">${contract['狀態']}</span>`)+mkDr('生成時間',contract['生成時間'])+(contract['簽署時間']?mkDr('簽署時間',contract['簽署時間']):'')+(contract['Drive檔案ID']?`<div class="dr"><span class="dl">契約檔案</span><span class="dv">${ctFile}</span></div>`:''):'<div style="color:var(--g400);font-size:13px;padding:8px 0">尚未生成</div>'}</div>`;
+
+  const docLabel={ID_FRONT:'身份證正面',ID_BACK:'身份證反面',GOOD_CONDUCT:'良民證'};
+  const docs=Array.isArray(allDocs)?allDocs:[];
+  document.getElementById('pm-docs').innerHTML=docs.length===0
+    ?'<div style="color:var(--g400);padding:8px 0;font-size:13px">尚無文件上傳記錄</div>'
+    :docs.map(d=>`<div class="card">
+      <div class="card-hd"><div class="card-title">${docLabel[d['文件類型']]||d['文件類型']}</div><span class="bdg ${d['審核狀態']==='APPROVED'?'bok':'bw'}">${d['審核狀態']==='APPROVED'?'已審核':'待審核'}</span></div>
+      <div class="id-bar">
+        <div class="id-bar-item"><div class="ib-label">中文姓名</div><div class="ib-value">${staff.name}</div></div>
+        <div class="id-bar-item"><div class="ib-label">身份證字號</div><div class="ib-value" style="font-family:monospace">${staff.idNumber}</div></div>
+        <div class="id-bar-item"><div class="ib-label">出生年月日</div><div class="ib-value">${staff.dob||'—'}</div></div>
+      </div>
+      <div style="font-size:11px;color:var(--blue-dk);margin-bottom:8px">ℹ 請核對上方建檔資料與所上傳的文件是否一致</div>
+      ${d['Drive檔案ID']?`<a href="https://drive.google.com/file/d/${d['Drive檔案ID']}/view" target="_blank" class="btn btn-sm btn-b" style="margin-bottom:10px">⬡ 開啟文件</a>`:'<div class="img-ph" style="margin-bottom:10px">尚未上傳</div>'}
+      <div class="bg-row">
+        <button class="btn btn-sm btn-t" onclick="doReviewDoc('${staff.id}','${d['文件類型']}','APPROVED')">✓ 審核通過</button>
+        <button class="btn btn-sm btn-r" onclick="doReviewDoc('${staff.id}','${d['文件類型']}','REJECTED')">✕ 退回</button>
+        ${d['文件類型']==='GOOD_CONDUCT'?`<button class="btn btn-sm" onclick="doConfirmGc('${staff.id}')">✓ 確認收到正本</button>`:''}
+      </div></div>`).join('');
+
+  document.getElementById('pm-bank').innerHTML=`
+    <div class="card"><div class="card-hd"><div class="card-title">銀行帳號</div></div>
+    ${bank?mkDr('銀行名稱',bank['銀行名稱'])+mkDr('帳號',`<span id="bk-el" style="font-family:monospace">${bank['銀行帳號']}</span><button class="copy-btn" onclick="copyEl('bk-el')">複製</button>`)+mkDr('持有人',bank['持有人']):'<div style="color:var(--g400);font-size:13px;padding:8px 0">尚未設定</div>'}</div>
+    <div class="card"><div class="card-hd"><div class="card-title">押金記錄</div></div>
+    ${deposit?mkDr('對帳狀態',`<span class="bdg ${deposit['對帳狀態']==='已對帳'?'bok':'bw'}">${deposit['對帳狀態']}</span>`)+mkDr('匯款日期',deposit['匯款日期'])+mkDr('帳號後5碼',deposit['帳號後5碼']):'<div style="color:var(--g400);font-size:13px;padding:8px 0">尚無押金記錄</div>'}</div>`;
+}
+
+async function doReviewDoc(staffId,docType,status){
+  const note=status==='REJECTED'?(prompt('退回原因:')||''):'';
+  const r=await run('reviewDoc',{token:TOKEN,staffId,docType,status,note});
+  if(!r.ok){toast(r.error);return;}
+  toast(status==='APPROVED'?'✓ 審核通過':'已退回');
+  openProfile(staffId);
+}
+async function doConfirmGc(staffId){
+  const r=await run('confirmGoodConduct',{token:TOKEN,staffId});
+  if(!r.ok){toast(r.error);return;}
+  toast('✓ 確認收到正本'); openProfile(staffId);
+}
+async function doExportHtml(){
+  if(!_curStaffId)return; toast('產出中…');
+  const r=await run('exportStaffHtml',{token:TOKEN,staffId:_curStaffId});
+  if(!r.ok){toast('失敗:'+r.error);return;}
+  toast('✓ 已存至 Drive'); window.open(r.fileUrl,'_blank');
+}
+
+// ════════════════════
+//  證件審核頁
+// ════════════════════
+async function loadDocs(){
+  const r=await run('getDocList',{token:TOKEN});
+  if(!r.ok){toast(r.error);return;}
+  const list=r.list||[];
+  document.getElementById('nb-docs').textContent=list.length;
+  const docLabel={ID_FRONT:'身份證正面',ID_BACK:'身份證反面',GOOD_CONDUCT:'良民證'};
+  document.getElementById('docs-list').innerHTML=list.length===0
+    ?'<div class="al al-ok"><span class="al-icon">✓</span><div>目前無待審核文件</div></div>'
+    :list.map(d=>`<div class="card">
+      <div class="card-hd"><div class="card-title">${d['姓名']} · ${docLabel[d['文件類型']]||d['文件類型']}</div><span class="bdg bw">待審</span></div>
+      <div class="id-bar">
+        <div class="id-bar-item"><div class="ib-label">中文姓名</div><div class="ib-value">${d['姓名']}</div></div>
+        <div class="id-bar-item"><div class="ib-label">身份證字號</div><div class="ib-value" style="font-family:monospace">${d.staffIdNumber||'—'}</div></div>
+        <div class="id-bar-item"><div class="ib-label">出生年月日</div><div class="ib-value">${d.staffDob||'—'}</div></div>
+      </div>
+      <div style="font-size:11px;color:var(--blue-dk);margin-bottom:10px">ℹ 請核對上方建檔資料與所上傳的文件是否一致</div>
+      ${d.fileUrl?`<a href="${d.fileUrl}" target="_blank" class="btn btn-sm btn-b" style="margin-bottom:10px">⬡ 開啟文件</a>`:'<div class="img-ph">尚未上傳</div>'}
+      <div class="bg-row" style="margin-top:10px">
+        <button class="btn btn-sm btn-t" onclick="reviewDocList('${d['人員ID']}','${d['文件類型']}','APPROVED')">✓ 審核通過</button>
+        <button class="btn btn-sm btn-r" onclick="reviewDocList('${d['人員ID']}','${d['文件類型']}','REJECTED')">✕ 退回</button>
+        ${d['文件類型']==='GOOD_CONDUCT'?`<button class="btn btn-sm" onclick="confirmGcList('${d['人員ID']}')">✓ 確認收到正本</button>`:''}
+      </div></div>`).join('');
+}
+async function reviewDocList(sid,t,s){const note=s==='REJECTED'?(prompt('退回原因:')||''):'';const r=await run('reviewDoc',{token:TOKEN,staffId:sid,docType:t,status:s,note});if(!r.ok){toast(r.error);return;}toast(s==='APPROVED'?'✓ 審核通過':'已退回');loadDocs();}
+async function confirmGcList(sid){const r=await run('confirmGoodConduct',{token:TOKEN,staffId:sid});if(!r.ok){toast(r.error);return;}toast('✓ 確認收到正本');loadDocs();}
+
+// ════════════════════
+//  銀行帳號管理
+// ════════════════════
+async function loadBank(){
+  const r=await run('getBankList',{token:TOKEN});if(!r.ok)return;
+  const tb=document.getElementById('bank-tbody');
+  tb.innerHTML=(r.list||[]).map((b,i)=>`<tr data-name="${b['姓名']}"><td class="nm">${b['姓名']}</td><td>${b['銀行名稱']}</td><td><span id="bkl${i}" style="font-family:monospace;font-size:11px">${b['銀行帳號']}</span><button class="copy-btn" onclick="copyEl('bkl${i}')" style="margin-left:6px">複製</button></td><td>${b['持有人']}</td><td><span class="bdg bok">已設定</span></td><td><button class="btn btn-sm" onclick="editBank('${b['人員ID']}','${b['銀行名稱']}','${b['銀行帳號']}','${b['持有人']}')">編輯</button></td></tr>`).join('')||'<tr><td colspan="6" style="text-align:center;padding:18px;color:var(--g400)">無資料</td></tr>';
+}
+function editBank(sid,bn,acc,holder){
+  const newBn=prompt('銀行名稱(目前:'+bn+'):',bn);if(newBn===null)return;
+  const newAcc=prompt('帳號:',acc);if(newAcc===null)return;
+  run('updateBank',{token:TOKEN,staffId:sid,bankJson:JSON.stringify({bankName:newBn,bankCode:'',account:newAcc,holder})}).then(r=>{if(!r.ok)toast(r.error);else{toast('✓ 已更新');loadBank();}});
+}
+
+// ════════════════════
+//  押金對帳
+// ════════════════════
+async function loadDeposit(){
+  const r=await run('getDepositList',{token:TOKEN});if(!r.ok)return;
+  const list=r.list||[];
+  document.getElementById('nb-dep').textContent=list.filter(d=>d['對帳狀態']==='待對帳').length;
+  const tb=document.getElementById('dep-tbody');
+  tb.innerHTML=list.map((d,i)=>{const done=d['對帳狀態']==='已對帳';return `<tr class="dep-row" data-name="${d['姓名']}"><td><input type="checkbox" class="dep-cb" data-id="${d['人員ID']}" style="accent-color:var(--coral)" ${done?'disabled':''}></td><td class="nm">${d['姓名']}</td><td>${d['匯款日期']}</td><td>${d['匯款時間']||'—'}</td><td style="font-family:monospace">${d['帳號後5碼']}</td><td>$${d['匯款金額']}</td><td><span class="bdg ${done?'bok':'bw'}">${d['對帳狀態']}</span></td><td style="font-size:11px">${d['對帳時間']||'—'}</td><td>${done?'<span style="font-size:11px;color:var(--g400)">完成</span>':`<button class="btn btn-sm btn-t" onclick="singleDep('${d['人員ID']}')">✓</button>`}</td></tr>`;}).join('')||'<tr><td colspan="9" style="text-align:center;padding:18px;color:var(--g400)">無押金記錄</td></tr>';
+}
+async function singleDep(sid){const r=await run('confirmDeposit',{token:TOKEN,staffIdsJson:JSON.stringify([sid])});if(!r.ok){toast(r.error);return;}toast('✓ 確認完成');loadDeposit();}
+async function batchConfirmDeposit(){
+  const ids=[...document.querySelectorAll('.dep-cb:checked')].map(c=>c.dataset.id);
+  if(!ids.length){toast('請先勾選項目');return;}
+  const r=await run('confirmDeposit',{token:TOKEN,staffIdsJson:JSON.stringify(ids)});
+  if(!r.ok){toast(r.error);return;}toast(`✓ 批次對帳 ${ids.length} 筆完成`);document.getElementById('dep-all').checked=false;loadDeposit();
+}
+
+// ════════════════════
+//  退款審核
+// ════════════════════
+async function loadRefund(){
+  const r=await run('getRefundList',{token:TOKEN});if(!r.ok)return;
+  const list=r.list||[];
+  const tb=document.getElementById('ref-tbody');
+  tb.innerHTML=list.map((d,i)=>`<tr class="ref-row" data-name="${d['姓名']}"><td><input type="checkbox" class="ref-cb" data-id="${d['人員ID']}" style="accent-color:var(--coral)"></td><td class="nm">${d['姓名']}</td><td>$${d['退款金額']||'—'}</td><td>${d['退款銀行']||'—'}</td><td><span id="ra${i}" style="font-family:monospace;font-size:11px">${d['退款帳號']||'—'}</span>${d['退款帳號']?`<button class="copy-btn" onclick="copyEl('ra${i}')" style="margin-left:4px">複製</button>`:''}</td><td><span class="bdg ${d['審核狀態']==='已退款'?'bi':d['審核狀態']==='已審核'?'bok':'bw'}">${d['審核狀態']||'待審核'}</span></td><td style="font-size:11px">${d['審核時間']||'—'}</td><td style="font-size:11px">${d['退款時間']||'—'}</td></tr>`).join('')||'<tr><td colspan="8" style="text-align:center;padding:18px;color:var(--g400)">無退款申請</td></tr>';
+}
+async function batchReviewRefund(){
+  const ids=[...document.querySelectorAll('.ref-cb:checked')].map(c=>c.dataset.id);
+  if(!ids.length){toast('請先勾選項目');return;}
+  const r=await run('reviewRefund',{token:TOKEN,staffIdsJson:JSON.stringify(ids)});
+  if(!r.ok){toast(r.error);return;}toast(`✓ 審核通過 ${ids.length} 筆`);document.getElementById('ref-all').checked=false;loadRefund();
+}
+async function batchCompleteRefund(){
+  const ids=[...document.querySelectorAll('.ref-cb:checked')].map(c=>c.dataset.id);
+  if(!ids.length){toast('請先勾選項目');return;}
+  if(!confirm(`確認退款完成 ${ids.length} 筆?\n退款後帳號將自動停用.`))return;
+  const r=await run('completeRefund',{token:TOKEN,staffIdsJson:JSON.stringify(ids)});
+  if(!r.ok){toast(r.error);return;}toast(`✓ 退款完成 ${ids.length} 筆,帳號已停用`);document.getElementById('ref-all').checked=false;loadRefund();
+}
+
+// ════════════════════
+//  管理員帳號
+// ════════════════════
+async function loadAdmins(){
+  const r=await run('getAdminList',{token:TOKEN});if(!r.ok){toast(r.error);return;}
+  const tb=document.getElementById('admin-tbody');
+  tb.innerHTML=(r.list||[]).map(a=>`<tr><td class="nm">${a.name}</td><td style="font-size:11px">${a.email}</td><td><span class="bdg ${a.role==='SUPER'?'bi':'bok'}">${a.role==='SUPER'?'超級管理員':'業務負責人'}</span></td><td>${a.regions}</td><td style="font-size:11px">${a.createdAt}</td><td style="font-size:11px">${a.lastLogin}</td><td><button class="btn btn-sm" onclick="doResetAdminPwd('${a.id}','${a.name}')">重設密碼</button></td></tr>`).join('')||'<tr><td colspan="7" style="text-align:center;padding:18px;color:var(--g400)">無管理員帳號</td></tr>';
+}
+function showAdminForm(){setEl('admin-form','block');}
+function hideAdminForm(){setEl('admin-form','none');}
+async function doCreateAdmin(){
+  const name=document.getElementById('adm-name').value.trim();
+  const email=document.getElementById('adm-email').value.trim();
+  const pwd=document.getElementById('adm-pwd').value;
+  const role=document.getElementById('adm-role').value;
+  const regions=document.getElementById('adm-regions').value;
+  if(!name||!email||!pwd){toast('請填寫姓名,Email 和密碼');return;}
+  const r=await run('createAdmin',{token:TOKEN,name,email,password:pwd,role,regions});
+  if(!r.ok){toast(r.error);return;}
+  toast('✓ 管理員帳號已建立');
+  hideAdminForm();
+  ['adm-name','adm-email','adm-pwd'].forEach(id=>document.getElementById(id).value='');
+  loadAdmins();
+}
+async function doResetAdminPwd(id,name){
+  const pwd=prompt(`重設 ${name} 的密碼\n請輸入新密碼(至少 6 碼):`);
+  if(!pwd)return;
+  if(pwd.length<6){toast('密碼至少 6 個字元');return;}
+  const r=await run('resetAdminPassword',{token:TOKEN,adminId:id,newPassword:pwd});
+  if(!r.ok){toast(r.error);return;} toast(`✓ ${name} 密碼已重設`);
+}
+
+// ════════════════════
+//  地區設定
+// ════════════════════
+async function loadRegions(){
+  const r=await run('getRegions',{token:TOKEN});if(!r.ok)return;
+  const list=r.regions||[];
+  document.getElementById('regions-list').innerHTML=list.map(rg=>`<div class="card">
+    <div class="card-hd"><div class="card-title">${rg['地區']}</div><span class="card-act" onclick="editRegionAcc('${rg['地區']}','${rg['押金帳號']||''}')">編輯押金帳號</span></div>
+    <div style="font-size:11px;font-weight:700;color:var(--g400);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">公司資訊</div>
+    ${mkDr('公司名稱',rg['公司名稱'])}${mkDr('統一編號',rg['統一編號'])}${mkDr('公司地址',rg['公司地址'])}${mkDr('公司電話',rg['公司電話'])}
+    <div style="height:6px"></div>
+    <div style="font-size:11px;font-weight:700;color:var(--g400);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">押金帳號</div>
+    ${mkDr('收款銀行',rg['押金銀行'])}${mkDr('收款帳號',`<span id="racc-${rg['地區']}">${rg['押金帳號']||'(未設定)'}</span><button class="copy-btn" onclick="copyEl('racc-${rg['地區']}')" style="margin-left:6px">複製</button>`)}
+    <div style="height:6px"></div>
+    <div style="font-size:11px;font-weight:700;color:var(--g400);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Google Drive / Sheets</div>
+    ${rg['Drive新訓建檔']?mkDr('新訓建檔資料夾',`<a href="https://drive.google.com/drive/folders/${rg['Drive新訓建檔']}" target="_blank" style="font-size:11px">開啟 ↗</a>`):''}
+    ${rg['Sheets發信工作表']?mkDr('發信工作表',`<a href="https://docs.google.com/spreadsheets/d/${rg['Sheets發信工作表']}" target="_blank" style="font-size:11px">開啟 ↗</a>`):''}
+  </div>`).join('')+`<div class="card" style="border-style:dashed;text-align:center;color:var(--g400);padding:24px;cursor:pointer" onclick="addRegion()"><div style="font-size:20px;margin-bottom:6px">+</div><div>新增地區(台中,高雄…)</div></div>`;
+}
+function editRegionAcc(name,cur){
+  const acc=prompt(`修改"${name}"押金收款帳號(目前:${cur||'未設定'}):`,cur);
+  if(acc===null)return;
+  run('saveRegion',{token:TOKEN,regionJson:JSON.stringify({'地區':name,'押金帳號':acc})}).then(r=>{if(!r.ok)toast(r.error);else{toast('✓ 已更新押金帳號');loadRegions();}});
+}
+function addRegion(){
+  const name=prompt('新地區名稱(如:台中):');if(!name)return;
+  run('saveRegion',{token:TOKEN,regionJson:JSON.stringify({'地區':name,'公司名稱':'檸檬專業清潔有限公司','統一編號':'42627791','公司地址':'','公司電話':'02-27002386','負責人':'謝曜聲','押金銀行':'富邦銀行(012)','押金帳號':'','Drive新訓建檔':'','Drive新訓退訓':'','Drive線上專員':'','Sheets發信工作表':'','負責管理員Email':''})).then(r=>{if(!r.ok)toast(r.error);else{toast('✓ 地區已新增,請至地區設定填入 Drive/Sheets ID');loadRegions();}});
+}
+
+// ════════════════════
+//  工具
+// ════════════════════
+function filterTbl(tbodyId,q){const kw=q.trim().toLowerCase();document.querySelectorAll('#'+tbodyId+' tr').forEach(r=>{r.style.display=(!kw||(r.dataset.name||'').toLowerCase().includes(kw))?'':'none';});}
+function toggleAll(cls,master){document.querySelectorAll('.'+cls).forEach(c=>c.checked=master.checked);}
+function mkDr(l,v_){return `<div class="dr"><span class="dl">${l}</span><span class="dv">${v_}</span></div>`;}
+function setEl(id,d){const el=document.getElementById(id);if(el)el.style.display=d;}
+function copyEl(id){const t=document.getElementById(id);if(t)navigator.clipboard.writeText(t.textContent.trim()).then(()=>toast('已複製'));}
+function showErr(id,m){const el=document.getElementById(id);el.textContent=m;el.style.display='block';}
+function hideErr(id){document.getElementById(id).style.display='none';}
+let _tt=null;
+function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');clearTimeout(_tt);_tt=setTimeout(()=>el.classList.remove('show'),2800);}
+
+// ── 診斷工具(改用 fetch)──
+function runDiag() {
+  const out = document.getElementById('diag-result');
+  out.innerHTML = '<div style="color:var(--blue-dk)">⏳ 測試中(最多 15 秒)…</div>';
+
+  const timer = setTimeout(() => {
+    out.innerHTML = '<div style="color:var(--red);background:var(--red-lt);padding:10px;border-radius:6px;line-height:1.7">❌ <strong>逾時(15秒無回應)</strong><br><br>請確認:<br>1. 從部署後的 exec 網址開啟(非 Apps Script 預覽)<br>2. 存取權:所有人<br>3. 版本選新版本後再更新</div>';
+  }, 15000);
+
+  fetch(API_URL + '?action=getRegionNames', { redirect: 'follow' }).then(r => r.json()).then(r => {
+    clearTimeout(timer);
+    out.innerHTML = '<div style="color:var(--teal-dk);background:var(--teal-lt);padding:10px;border-radius:6px">✅ <strong>連線正常!</strong> 請用 jenny@lemonclean.com.tw / jenny 登入.</div>';
+  }).catch(err => {
+    clearTimeout(timer);
+    out.innerHTML = '<div style="color:var(--red);background:var(--red-lt);padding:10px;border-radius:6px;line-height:1.7">❌ fetch 失敗:'+err.message+'<br><br>請確認已重新部署(版本選新版本,存取權:所有人)</div>';
+  });
+}
+</script>
+</body>
+</html>
