@@ -5,7 +5,7 @@ services:
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn app:app
     envVars:
-      - key: GOOGLE_CREDS
+      - key: new-training-492518-ece3e9916ad5.jason
         sync: false
-      - key: SHEET_ID
+      - key: 1R-zWdM1bIMPA3rnwoGZ4qvmSVhCXeH2a5JQ3JR4JiAM
         sync: false
