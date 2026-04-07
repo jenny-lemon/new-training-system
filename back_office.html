@@ -361,7 +361,7 @@ button,input,select,textarea{font-family:var(--font);}button{cursor:pointer;}a{c
 // ════════════════════
 //  全域
 // ════════════════════
-let TOKEN = '';
+let TOKEN = localStorage.getItem('lemon_admin_token') || '';
 let _curStaffId = '';
 let _nbPage = 1;
 
@@ -434,6 +434,21 @@ function closeModal(id){document.getElementById(id).style.display='none';documen
 // ════════════════════
 //  登入
 // ════════════════════
+// 頁面載入時自動還原 session
+window.addEventListener('DOMContentLoaded', async () => {
+  if (TOKEN) {
+    const r = await run('getAdminList', { token: TOKEN });
+    if (r.ok) {
+      showPg('pg-main');
+      go('accounts', document.getElementById('n-accounts'));
+      return;
+    } else {
+      TOKEN = '';
+      localStorage.removeItem('lemon_admin_token');
+    }
+  }
+});
+
 async function doLogin() {
   const email=document.getElementById('a-email').value.trim();
   const pwd=document.getElementById('a-pwd').value;
@@ -463,13 +478,14 @@ async function doLogin() {
     return;
   }
   TOKEN=r.token;
+  localStorage.setItem('lemon_admin_token', TOKEN);
   document.getElementById('nav-name').textContent=r.name;
   document.getElementById('nav-role').textContent=r.regions||'全地區';
   showPg('pg-main');
   go('accounts',document.getElementById('n-accounts'));
 }
 
-async function doLogout(){await run('apiLogout',TOKEN);TOKEN='';showPg('pg-login');}
+async function doLogout(){await run('logout',{token:TOKEN});TOKEN='';localStorage.removeItem('lemon_admin_token');showPg('pg-login');}
 
 // ════════════════════
 //  帳號管理
