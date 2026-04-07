@@ -509,35 +509,30 @@ let _uploadType = '';
 //  API 呼叫(fetch POST)
 //  回傳 Promise<result>
 // ════════════════════
-const API_URL = 'https://script.google.com/a/macros/lemonclean.com.tw/s/AKfycbxQ5cTV1a8o3c8eJf2qvoC1S2sxrC5q4Tw9Sy9xzyrnrSdJ3HslQHCy2vxjRDyGABuq/exec';
+const API_URL = 'https://new-training.jenny-bed.workers.dev';
 
 async function run(action, data) {
   try {
-    const params = new URLSearchParams({ action });
-    if (data) {
-      Object.entries(data).forEach(([k, v]) => {
-        params.set(k, typeof v === 'object' ? JSON.stringify(v) : String(v));
-      });
-    }
-    // registerNewbie 資料量大,改用 POST 避免 URL 長度限制
-    let res;
-    if (action === 'registerNewbie') {
-      res = await fetch(API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({ action, ...(data||{}) }),
-        redirect: 'follow',
-      });
-    } else {
-      const url = API_URL + '?' + params.toString();
-      res = await fetch(url, { redirect: 'follow' });
-    }
+    const actionMap = {
+      'staffLogin':       '/api/staff-login',
+      'logout':           '/api/logout',
+      'getRegionNames':   '/api/get-region-names',
+      'registerNewbie':   '/api/register-newbie',
+      'getMyProfile':     '/api/my-profile',
+      'agreeRules':       '/api/agree-rules',
+      'signContract':     '/api/sign-contract',
+      'updateMyBank':     '/api/update-bank',
+      'submitDeposit':    '/api/submit-deposit',
+      'applyRefund':      '/api/apply-refund',
+    };
+    const path = actionMap[action] || '/api/' + action.replace(/([A-Z])/g, '-$1').toLowerCase();
+    const res = await fetch(API_URL + path, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data || {}),
+    });
     if (!res.ok) throw new Error('HTTP ' + res.status);
-    const text = await res.text();
-    if (text.trim().startsWith('<')) {
-      throw new Error('回傳了 HTML 而非 JSON');
-    }
-    return JSON.parse(text);
+    return await res.json();
   } catch(e) {
     return { ok: false, error: '連線失敗:' + e.message };
   }
