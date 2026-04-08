@@ -679,7 +679,7 @@ async function loadDocs(){
         <div class="id-bar-item"><div class="ib-label">出生年月日</div><div class="ib-value">${d.staffDob||'—'}</div></div>
       </div>
       <div style="font-size:11px;color:var(--blue-dk);margin-bottom:10px">ℹ 請核對上方建檔資料與所上傳的文件是否一致</div>
-      ${d.fileUrl?`<a href="${d.fileUrl}" target="_blank" class="btn btn-sm btn-b" style="margin-bottom:10px">⬡ 開啟文件</a>`:'<div class="img-ph">尚未上傳</div>'}
+      ${d.fileUrl?`<a href="${d.fileUrl}" target="_blank" class="btn btn-sm btn-b" style="margin-bottom:10px">⬡ 開啟文件</a>':'<div class="img-ph">尚未上傳</div>'}
       <div class="bg-row" style="margin-top:10px">
         <button class="btn btn-sm btn-t" onclick="reviewDocList('${d['人員ID']}','${d['文件類型']}','APPROVED')">✓ 審核通過</button>
         <button class="btn btn-sm btn-r" onclick="reviewDocList('${d['人員ID']}','${d['文件類型']}','REJECTED')">✕ 退回</button>
