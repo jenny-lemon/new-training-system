@@ -282,7 +282,7 @@ button,input,select,textarea{font-family:var(--font);}button{cursor:pointer;}
       <div class="nav-item" id="n-docs" onclick="go('docs',this)"><div class="nav-dot"></div>證件提供</div>
       <div class="nav-item" id="n-bank" onclick="go('bank',this)"><div class="nav-dot"></div>銀行帳號</div>
       <div class="nav-sec">押金</div>
-      <div class="nav-item" id="n-deposit" onclick="go('deposit',this)"><div class="nav-dot"></div>押金繳交</div>
+      <div class="nav-item" id="n-deposit" onclick="go('deposit',this)"><div class="nav-dot"></div>工具包押金繳交</div>
       <div class="nav-item" id="n-refund" onclick="go('refund',this)"><div class="nav-dot"></div>押金退款申請</div>
     </div>
     <div class="sb-collapse" onclick="collapseSb()">◀ 收合選單</div>
@@ -421,6 +421,28 @@ button,input,select,textarea{font-family:var(--font);}button{cursor:pointer;}
       <!-- 銀行帳號 -->
       <div id="p-bank" class="fp" style="display:none">
         <div class="topbar"><div><div class="ph">銀行帳號</div><div class="ps">報酬匯款帳戶</div></div></div>
+        <div class="al al-i">
+          <span class="al-icon">💡</span>
+          <div><strong>元大銀行開戶說明</strong><br>
+          <a href="https://www.yuantabank.com.tw/bankwebIMG/event/Bank_Act2021/openacct/index.html" target="_blank">網路開戶：點此前往元大網路開戶 ↗</a><br>
+          至分行開戶請避開午休（12:00–13:30），告知欲開薪轉戶，提供公司名稱：<strong>檸檬專業清潔有限公司</strong>，統編 <strong>42627791</strong>。</div>
+        </div>
+        <div class="al al-i">
+          <span class="al-icon">💡</span>
+          <div>
+            <strong>元大銀行開戶說明</strong><br>
+            網路開戶：<a href="https://www.yuantabank.com.tw/bankwebIMG/event/Bank_Act2021/openacct/index.html" target="_blank">點此前往元大網路開戶 ↗</a><br>
+            至分行開戶請避開午休（12:00–13:30），告知欲開薪轉戶，提供公司名稱：<strong>檸檬專業清潔有限公司</strong>，統編 <strong>42627791</strong>。
+          </div>
+        </div>
+        <div class="al al-i">
+          <span class="al-icon">💡</span>
+          <div>
+            <strong>元大銀行開戶說明</strong><br>
+            <a href="https://www.yuantabank.com.tw/bankwebIMG/event/Bank_Act2021/openacct/index.html" target="_blank">網路開戶：點此前往元大網路開戶 ↗</a><br>
+            至分行開戶請避開午休（12:00–13:30），告知欲開<strong>薪轉戶</strong>，提供公司名稱：<strong>檸檬專業清潔有限公司</strong>，統編 42627791。
+          </div>
+        </div>
         <div class="card" id="bank-view">
           <div class="card-hd"><div class="card-title">匯款帳戶</div><div class="card-act" onclick="showBankForm()">修改</div></div>
           <div id="bank-rows"></div>
@@ -446,10 +468,10 @@ button,input,select,textarea{font-family:var(--font);}button{cursor:pointer;}
         <div class="topbar"><div><div class="ph">工具包押金繳交</div></div></div>
         <div class="card">
           <div class="dr"><span class="dl">應繳金額</span><span class="dv" style="font-size:16px;font-weight:700">$2,000</span></div>
-          <div class="dr"><span class="dl">收款銀行</span><span class="dv" id="dep-bank">富邦銀行(012)</span></div>
-          <div class="dr"><span class="dl">收款帳號</span><span class="dv"><span id="dep-acc">載入中…</span><button class="copy-btn" onclick="copyEl('dep-acc')">複製</button></span></div>
-          <div class="dr"><span class="dl">戶名</span><span class="dv">檸檬家事有限公司</span></div>
-          <div style="font-size:11px;color:var(--g400);margin-top:8px">以上帳號由管理員維護,如有疑問請聯絡業務負責人.</div>
+          <div class="dr"><span class="dl">銀行名稱</span><span class="dv" id="dep-bank">載入中…</span></div>
+          <div class="dr"><span class="dl">銀行帳號</span><span class="dv"><span id="dep-acc">載入中…</span><button class="copy-btn" onclick="copyEl('dep-acc')">複製</button></span></div>
+          <div class="dr"><span class="dl">戶名</span><span class="dv" id="dep-name">載入中…</span></div>
+          <div style="font-size:11px;color:var(--g400);margin-top:8px">以上帳號由管理員維護，如有疑問請聯絡業務負責人。</div>
         </div>
         <div class="card">
           <div class="card-hd"><div class="card-title">填寫匯款資料</div></div>
@@ -770,7 +792,14 @@ function renderRules() {
 
 async function doAgreeRules() {
   if (!document.getElementById('rules-cb').checked) { toast('請先勾選確認已閱讀'); return; }
-  const r = await run('agreeRules', {token:TOKEN});
+  // 嘗試取得 IP
+  let ip = '';
+  try {
+    const ipResp = await fetch('https://api.ipify.org?format=json');
+    const ipData = await ipResp.json();
+    ip = ipData.ip || '';
+  } catch(e) {}
+  const r = await run('agreeRules', {token:TOKEN, ip});
   if (!r.ok) { toast(r.error); return; }
   await loadProfile(); renderRules(); renderOverview(); toast('✓ 已同意團隊規章');
 }
@@ -895,7 +924,11 @@ async function doUpdateBank() {
 function renderDeposit() {
   if (!PROFILE) return;
   const ri = PROFILE.regionInfo;
-  if (ri) { document.getElementById('dep-bank').textContent=ri.depBank||'富邦銀行(012)'; document.getElementById('dep-acc').textContent=ri.depAccount||'(請洽業務負責人)'; }
+  if (ri) {
+    document.getElementById('dep-bank').textContent = ri.depBank || '—';
+    document.getElementById('dep-acc').textContent = ri.depAccount || '(請洽業務負責人)';
+    document.getElementById('dep-name').textContent = ri.coName || '檸檬專業清潔有限公司';
+  }
   const dep = PROFILE.deposit;
   if (dep) {
     setEl('dep-ok','flex');
