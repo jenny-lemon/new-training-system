@@ -170,16 +170,16 @@ button,input,select,textarea{font-family:var(--font);}button{cursor:pointer;}a{c
       <div class="nav-group">
         <div class="nav-sec" onclick="toggleGroup(this)">新人管理 <span class="nav-sec-arrow open">▾</span></div>
         <div class="nav-items">
-          <div class="nav-item" id="n-newbies" onclick="go('newbies',this)"><div class="nav-dot"></div>新人清單</div>
+          <div class="nav-item" id="n-newbies" onclick="go('newbies',this)"><div class="nav-dot"></div>新人總覽</div>
           <div class="nav-item" id="n-docs" onclick="go('docs',this)"><div class="nav-dot"></div>證件審核<span class="nb" id="nb-docs">0</span></div>
           <div class="nav-item" id="n-bank" onclick="go('bank',this)"><div class="nav-dot"></div>銀行帳號管理</div>
         </div>
       </div>
       <div class="nav-group">
-        <div class="nav-sec" onclick="toggleGroup(this)">押金管理 <span class="nav-sec-arrow open">▾</span></div>
+        <div class="nav-sec" onclick="toggleGroup(this)">工具包押金管理 <span class="nav-sec-arrow open">▾</span></div>
         <div class="nav-items">
-          <div class="nav-item" id="n-deposit" onclick="go('deposit',this)"><div class="nav-dot"></div>匯款對帳<span class="nb" id="nb-dep">0</span></div>
-          <div class="nav-item" id="n-refund" onclick="go('refund',this)"><div class="nav-dot"></div>退款審核</div>
+          <div class="nav-item" id="n-deposit" onclick="go('deposit',this)"><div class="nav-dot"></div>工具包押金<span class="nb" id="nb-dep">0</span></div>
+          <div class="nav-item" id="n-refund" onclick="go('refund',this)"><div class="nav-dot"></div>退款管理</div>
         </div>
       </div>
       <div class="nav-group">
@@ -230,7 +230,7 @@ button,input,select,textarea{font-family:var(--font);}button{cursor:pointer;}a{c
 
       <!-- 新人清單 -->
       <div id="p-newbies" class="bp" style="display:none">
-        <div class="topbar"><div><div class="ph">新人清單</div></div></div>
+        <div class="topbar"><div><div class="ph">新人總覽</div><div class="ps">最新在最上面，每頁 20 人</div></div><button class="btn btn-p btn-sm" onclick="exportAllStaff()">⬇ 批次匯出</button></div>
         <div class="search-bar"><span>🔍</span><input type="text" id="newbies-search" placeholder="搜尋姓名…" oninput="searchNewbies()"></div>
         <div class="card" style="padding:0;overflow:auto">
           <table class="tbl" style="min-width:880px">
@@ -261,7 +261,7 @@ button,input,select,textarea{font-family:var(--font);}button{cursor:pointer;}a{c
 
       <!-- 匯款對帳 -->
       <div id="p-deposit" class="bp" style="display:none">
-        <div class="topbar"><div><div class="ph">匯款對帳</div></div></div>
+        <div class="topbar"><div><div class="ph">工具包押金</div></div></div>
         <div class="al al-i"><span class="al-icon">ℹ</span><div>勾選後按"批次對帳確認",系統自動記錄時間.</div></div>
         <div class="search-bar"><span>🔍</span><input type="text" placeholder="搜尋姓名…" oninput="filterTbl('dep-tbody',this.value)"></div>
         <div class="card" style="padding:0;overflow:auto">
@@ -279,18 +279,17 @@ button,input,select,textarea{font-family:var(--font);}button{cursor:pointer;}a{c
 
       <!-- 退款審核 -->
       <div id="p-refund" class="bp" style="display:none">
-        <div class="topbar"><div><div class="ph">退款審核</div></div></div>
+        <div class="topbar"><div><div class="ph">退款管理</div></div></div>
         <div class="al al-i"><span class="al-icon">ℹ</span><div>"審核通過"後才可"標記退款完成".退款完成後帳號將<strong>自動停用</strong>.</div></div>
         <div class="search-bar"><span>🔍</span><input type="text" placeholder="搜尋姓名…" oninput="filterTbl('ref-tbody',this.value)"></div>
         <div class="card" style="padding:0;overflow:auto">
           <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--g50);border-bottom:1px solid var(--bdr);flex-wrap:wrap">
             <input type="checkbox" id="ref-all" onchange="toggleAll('ref-cb',this)" style="accent-color:var(--coral)">
             <span style="font-size:12px;color:var(--g500)">全選</span>
-            <button class="btn btn-sm btn-t" onclick="batchReviewRefund()" style="margin-left:8px">✓ 批次審核通過</button>
-            <button class="btn btn-sm btn-b" onclick="batchCompleteRefund()">💸 批次標記退款完成</button>
+            <button class="btn btn-sm btn-b" onclick="batchCompleteRefund()" style="margin-left:8px">💸 批次標記退款完成</button>
           </div>
           <table class="tbl" style="min-width:760px">
-            <thead><tr><th style="width:36px"></th><th>姓名</th><th>退款金額</th><th>退款銀行</th><th>退款帳號</th><th>狀態</th><th>審核時間</th><th>退款時間</th></tr></thead>
+            <thead><tr><th style="width:36px"></th><th>姓名</th><th>退款金額</th><th>退款銀行</th><th>退款帳號（完整）</th><th>狀態</th><th>退款時間</th></tr></thead>
             <tbody id="ref-tbody"></tbody>
           </table>
         </div>
@@ -344,8 +343,8 @@ button,input,select,textarea{font-family:var(--font);}button{cursor:pointer;}a{c
       <div class="tabs">
         <button class="tab on" onclick="swTab('pm',0,this)">基本資料</button>
         <button class="tab" onclick="swTab('pm',1,this)">規章/契約</button>
-        <button class="tab" onclick="swTab('pm',2,this)">文件</button>
-        <button class="tab" onclick="swTab('pm',3,this)">銀行/押金</button>
+        <button class="tab" onclick="swTab('pm',2,this)">證件</button>
+        <button class="tab" onclick="swTab('pm',3,this)">銀行帳號</button>
       </div>
       <div class="tab-panel pm on" id="pm-basic"></div>
       <div class="tab-panel pm" id="pm-contract"></div>
@@ -559,6 +558,28 @@ async function loadNewbies(pg){
 function searchNewbies(){_nbPage=1;loadNewbies(1);}
 function changePage(d){loadNewbies(_nbPage+d);}
 
+async function exportAllStaff() {
+  toast('匯出中…');
+  const r = await run('getStaffList', {token:TOKEN, search:'', page:1});
+  if(!r.ok){toast(r.error);return;}
+  // 取得所有頁
+  let all = [...r.list];
+  const totalPages = Math.ceil(r.total/20);
+  for(let p=2;p<=totalPages;p++){
+    const rp = await run('getStaffList',{token:TOKEN,search:'',page:p});
+    if(rp.ok) all = [...all, ...rp.list];
+  }
+  const headers = ['ID','姓名','地區','狀態','規章同意','契約狀態','身份證正面','良民證','銀行','押金'];
+  const rows = all.map(s=>[s.id,s.name,s.region,s.status,s.rules?'已同意':'未同意',s.contract||'—',s.idFront||'—',s.gc||'—',s.bank||'—',s.deposit||'—']);
+  const csv = [headers,...rows].map(r=>r.map(v=>`"${String(v||'').replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = '新人總覽_'+new Date().toLocaleDateString('zh-TW')+'.csv';
+  a.click();
+  toast('✓ 匯出完成');
+}
+
 // ════════════════════
 //  個人資料 Modal
 // ════════════════════
@@ -586,7 +607,7 @@ async function openProfile(staffId){
   const ctFile=contract&&contract['Drive檔案ID']?`<a href="https://drive.google.com/file/d/${contract['Drive檔案ID']}/view" target="_blank" class="btn btn-sm">⬡ 開啟契約</a>`:'';
   document.getElementById('pm-contract').innerHTML=`
     <div class="card"><div class="card-hd"><div class="card-title">規章同意</div></div>
-    ${rules?mkDr('同意時間',rules['同意時間'])+mkDr('版本',rules['規章版本']):'<div style="color:var(--g400);font-size:13px;padding:8px 0">尚未同意</div>'}</div>
+    ${rules?mkDr('狀態','<span class="bdg bok">✓ 已同意</span>')+mkDr('同意時間',rules['同意時間'])+mkDr('IP位址',rules['IP位址']||'—')+mkDr('版本',rules['規章版本']):'<div style="color:var(--g400);font-size:13px;padding:8px 0"><span class="bdg bw">⏳ 未同意</span></div>'}</div>
     <div class="card"><div class="card-hd"><div class="card-title">居間承攬契約</div></div>
     ${contract?mkDr('狀態',`<span class="bdg ${contract['狀態']==='已簽署'?'bok':'bw'}">${contract['狀態']}</span>`)+mkDr('生成時間',contract['生成時間'])+(contract['簽署時間']?mkDr('簽署時間',contract['簽署時間']):'')+(contract['Drive檔案ID']?`<div class="dr"><span class="dl">契約檔案</span><span class="dv">${ctFile}</span></div>`:''):'<div style="color:var(--g400);font-size:13px;padding:8px 0">尚未生成</div>'}</div>`;
 
@@ -611,9 +632,13 @@ async function openProfile(staffId){
 
   document.getElementById('pm-bank').innerHTML=`
     <div class="card"><div class="card-hd"><div class="card-title">銀行帳號</div></div>
-    ${bank?mkDr('銀行名稱',bank['銀行名稱'])+mkDr('帳號',`<span id="bk-el" style="font-family:monospace">${bank['銀行帳號']}</span><button class="copy-btn" onclick="copyEl('bk-el')">複製</button>`)+mkDr('持有人',bank['持有人']):'<div style="color:var(--g400);font-size:13px;padding:8px 0">尚未設定</div>'}</div>
+    ${bank?mkDr('戶名',bank['持有人'])+mkDr('銀行名稱',bank['銀行名稱'])+mkDr('銀行帳號',`<span id="bk-el" style="font-family:monospace">${bank['銀行帳號']}</span><button class="copy-btn" onclick="copyEl('bk-el')" style="margin-left:6px">複製</button>`):'<div style="color:var(--g400);font-size:13px;padding:8px 0">尚未設定</div>'}</div>
     <div class="card"><div class="card-hd"><div class="card-title">押金記錄</div></div>
-    ${deposit?mkDr('對帳狀態',`<span class="bdg ${deposit['對帳狀態']==='已對帳'?'bok':'bw'}">${deposit['對帳狀態']}</span>`)+mkDr('匯款日期',deposit['匯款日期'])+mkDr('帳號後5碼',deposit['帳號後5碼']):'<div style="color:var(--g400);font-size:13px;padding:8px 0">尚無押金記錄</div>'}</div>`;
+    ${deposit?
+      mkDr('繳交狀態',`<span class="bdg ${deposit['對帳狀態']==='已對帳'?'bok':'bw'}">${deposit['對帳狀態']==='已對帳'?'✓ 已繳交':'待確認'}</span>`)+
+      mkDr('繳交資訊',`${deposit['匯款日期']||'—'} ${deposit['匯款時間']||''} 後5碼:${deposit['帳號後5碼']||'—'} $${deposit['匯款金額']||2000}`)+
+      (deposit['退款申請時間']?mkDr('退款狀態',`<span class="bdg ${deposit['審核狀態']==='已退款'?'bok':'bw'}">${deposit['審核狀態']==='已退款'?'✓ 已退款':'待退款'}</span>`)+mkDr('退款資訊',`${deposit['退款銀行']||'—'} ${deposit['退款帳號']||'—'} $${deposit['退款金額']||'—'}`):mkDr('退款記錄','<span class="bdg bg">未退款</span>'))
+      :'<div style="color:var(--g400);font-size:13px;padding:8px 0">尚無押金記錄</div>'}</div>\`;
 }
 
 async function doReviewDoc(staffId,docType,status){
@@ -703,7 +728,7 @@ async function loadRefund(){
   const r=await run('getRefundList',{token:TOKEN});if(!r.ok)return;
   const list=r.list||[];
   const tb=document.getElementById('ref-tbody');
-  tb.innerHTML=list.map((d,i)=>`<tr class="ref-row" data-name="${d['姓名']}"><td><input type="checkbox" class="ref-cb" data-id="${d['人員ID']}" style="accent-color:var(--coral)"></td><td class="nm">${d['姓名']}</td><td>$${d['退款金額']||'—'}</td><td>${d['退款銀行']||'—'}</td><td><span id="ra${i}" style="font-family:monospace;font-size:11px">${d['退款帳號']||'—'}</span>${d['退款帳號']?`<button class="copy-btn" onclick="copyEl('ra${i}')" style="margin-left:4px">複製</button>`:''}</td><td><span class="bdg ${d['審核狀態']==='已退款'?'bi':d['審核狀態']==='已審核'?'bok':'bw'}">${d['審核狀態']||'待審核'}</span></td><td style="font-size:11px">${d['審核時間']||'—'}</td><td style="font-size:11px">${d['退款時間']||'—'}</td></tr>`).join('')||'<tr><td colspan="8" style="text-align:center;padding:18px;color:var(--g400)">無退款申請</td></tr>';
+  tb.innerHTML=list.map((d,i)=>`<tr class="ref-row" data-name="${d['姓名']}"><td><input type="checkbox" class="ref-cb" data-id="${d['人員ID']}" style="accent-color:var(--coral)"></td><td class="nm">${d['姓名']}</td><td>$${d['退款金額']||'—'}</td><td>${d['退款銀行']||'—'}</td><td><span id="ra${i}" style="font-family:monospace">${d['退款帳號']||'—'}</span>${d['退款帳號']?`<button class="copy-btn" onclick="copyEl('ra${i}')" style="margin-left:4px">複製</button>`:''}</td><td><span class="bdg ${d['審核狀態']==='已退款'?'bi':d['審核狀態']==='已審核'?'bok':'bw'}">${d['審核狀態']||'待審核'}</span></td><td style="font-size:11px">${d['審核時間']||'—'}</td><td style="font-size:11px">${d['退款時間']||'—'}</td></tr>`).join('')||'<tr><td colspan="8" style="text-align:center;padding:18px;color:var(--g400)">無退款申請</td></tr>';
 }
 async function batchReviewRefund(){
   const ids=[...document.querySelectorAll('.ref-cb:checked')].map(c=>c.dataset.id);
@@ -763,17 +788,53 @@ async function loadRegions(){
     ${mkDr('公司名稱',rg['公司名稱'])}${mkDr('統一編號',rg['統一編號'])}${mkDr('公司地址',rg['公司地址'])}${mkDr('公司電話',rg['公司電話'])}
     <div style="height:6px"></div>
     <div style="font-size:11px;font-weight:700;color:var(--g400);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">押金帳號</div>
-    ${mkDr('收款銀行',rg['押金銀行'])}${mkDr('收款帳號',`<span id="racc-${rg['地區']}">${rg['押金帳號']||'(未設定)'}</span><button class="copy-btn" onclick="copyEl('racc-${rg['地區']}')" style="margin-left:6px">複製</button>`)}
+    ${mkDr('銀行名稱',rg['押金銀行'])}${mkDr('銀行帳號',`<span id="racc-${rg['地區']}">${rg['押金帳號']||'(未設定)'}</span><button class="copy-btn" onclick="copyEl('racc-${rg['地區']}')" style="margin-left:6px">複製</button>`)}
     <div style="height:6px"></div>
     <div style="font-size:11px;font-weight:700;color:var(--g400);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Google Drive / Sheets</div>
     ${rg['Drive新訓建檔']?mkDr('新訓建檔資料夾',`<a href="https://drive.google.com/drive/folders/${rg['Drive新訓建檔']}" target="_blank" style="font-size:11px">開啟 ↗</a>`):''}
     ${rg['Sheets發信工作表']?mkDr('發信工作表',`<a href="https://docs.google.com/spreadsheets/d/${rg['Sheets發信工作表']}" target="_blank" style="font-size:11px">開啟 ↗</a>`):''}
   </div>`).join('')+`<div class="card" style="border-style:dashed;text-align:center;color:var(--g400);padding:24px;cursor:pointer" onclick="addRegion()"><div style="font-size:20px;margin-bottom:6px">+</div><div>新增地區(台中,高雄…)</div></div>`;
 }
-function editRegionAcc(name,cur){
-  const acc=prompt('修改['+name+']押金收款帳號(目前:'+(cur||'未設定')+'):', cur);
-  if(acc===null)return;
-  run('saveRegion',{token:TOKEN,regionJson:JSON.stringify({'地區':name,'押金帳號':acc})}).then(r=>{if(!r.ok)toast(r.error);else{toast('✓ 已更新押金帳號');loadRegions();}});
+function editRegion(name) {
+  // 找出目前地區資料
+  run('getRegions',{token:TOKEN}).then(r=>{
+    if(!r.ok){toast(r.error);return;}
+    const rg = r.regions.find(x=>x['地區']===name)||{};
+    const fields = [
+      ['公司名稱','公司名稱',rg['公司名稱']||''],
+      ['統一編號','統一編號',rg['統一編號']||''],
+      ['公司地址','公司地址',rg['公司地址']||''],
+      ['公司電話','公司電話',rg['公司電話']||''],
+      ['負責人','負責人',rg['負責人']||''],
+      ['押金銀行','銀行名稱',rg['押金銀行']||''],
+      ['押金帳號','銀行帳號',rg['押金帳號']||''],
+      ['Drive新訓建檔','Drive 資料夾 ID',rg['Drive新訓建檔']||''],
+    ];
+    const modal = document.createElement('div');
+    modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:300;display:flex;align-items:center;justify-content:center;padding:24px';
+    const box = document.createElement('div');
+    box.style.cssText='background:#fff;border-radius:12px;width:100%;max-width:480px;overflow:hidden';
+    box.innerHTML=`<div style="padding:16px 20px;border-bottom:1px solid #eee;display:flex;justify-content:space-between;align-items:center"><strong>編輯地區：${name}</strong><button onclick="this.closest('[style*=fixed]').remove()" style="background:none;border:none;font-size:20px;cursor:pointer">×</button></div>
+    <div style="padding:20px;max-height:60vh;overflow-y:auto">
+      ${fields.map(([key,label,val])=>`<div style="margin-bottom:12px"><label style="font-size:12px;color:#6B6862;display:block;margin-bottom:4px">${label}</label><input data-key="${key}" value="${val}" style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;font-family:inherit"></div>`).join('')}
+    </div>
+    <div style="padding:14px 20px;border-top:1px solid #eee;display:flex;gap:10px;justify-content:flex-end">
+      <button onclick="this.closest('[style*=fixed]').remove()" style="padding:7px 14px;border-radius:6px;border:1px solid #ddd;background:#fff;cursor:pointer">取消</button>
+      <button id="save-region-btn" style="padding:7px 14px;border-radius:6px;background:#D85A30;color:#fff;border:none;cursor:pointer">儲存</button>
+    </div>`;
+    modal.appendChild(box);
+    document.body.appendChild(modal);
+    box.querySelector('#save-region-btn').onclick = () => {
+      const obj = {'地區': name};
+      box.querySelectorAll('input[data-key]').forEach(inp => { obj[inp.dataset.key] = inp.value.trim(); });
+      run('saveRegion',{token:TOKEN, region: obj}).then(res=>{
+        if(!res.ok){toast(res.error);return;}
+        toast('✓ 地區資料已更新');
+        modal.remove();
+        loadRegions();
+      });
+    };
+  });
 }
 function addRegion(){
   var name=prompt("新地區名稱(如:台中)");if(!name)return;
