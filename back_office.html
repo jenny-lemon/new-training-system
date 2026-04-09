@@ -368,7 +368,6 @@ let TOKEN = localStorage.getItem('lemon_admin_token') || '';
 let _curStaffId = '';
 let _nbPage = 1;
 
-// API 呼叫(用 fetch POST 到同一個 GAS Web App URL)
 const API_URL = 'https://new-training.jenny-bed.workers.dev';
 
 async function run(action, data) {
@@ -437,7 +436,6 @@ function closeModal(id){document.getElementById(id).style.display='none';documen
 // ════════════════════
 //  登入
 // ════════════════════
-// 頁面載入時自動還原 session
 window.addEventListener('DOMContentLoaded', async () => {
   if (TOKEN) {
     const r = await run('getAdminList', { token: TOKEN });
@@ -562,7 +560,6 @@ async function exportAllStaff() {
   toast('匯出中…');
   const r = await run('getStaffList', {token:TOKEN, search:'', page:1});
   if(!r.ok){toast(r.error);return;}
-  // 取得所有頁
   let all = [...r.list];
   const totalPages = Math.ceil(r.total/20);
   for(let p=2;p<=totalPages;p++){
@@ -630,6 +627,7 @@ async function openProfile(staffId){
         ${d['文件類型']==='GOOD_CONDUCT'?`<button class="btn btn-sm" onclick="doConfirmGc('${staff.id}')">✓ 確認收到正本</button>`:''}
       </div></div>`).join('');
 
+  // ✅ BUG 1 修正：移除結尾多餘的反引號
   document.getElementById('pm-bank').innerHTML=`
     <div class="card"><div class="card-hd"><div class="card-title">銀行帳號</div></div>
     ${bank?mkDr('戶名',bank['持有人'])+mkDr('銀行名稱',bank['銀行名稱'])+mkDr('銀行帳號',`<span id="bk-el" style="font-family:monospace">${bank['銀行帳號']}</span><button class="copy-btn" onclick="copyEl('bk-el')" style="margin-left:6px">複製</button>`):'<div style="color:var(--g400);font-size:13px;padding:8px 0">尚未設定</div>'}</div>
@@ -638,7 +636,7 @@ async function openProfile(staffId){
       mkDr('繳交狀態',`<span class="bdg ${deposit['對帳狀態']==='已對帳'?'bok':'bw'}">${deposit['對帳狀態']==='已對帳'?'✓ 已繳交':'待確認'}</span>`)+
       mkDr('繳交資訊',`${deposit['匯款日期']||'—'} ${deposit['匯款時間']||''} 後5碼:${deposit['帳號後5碼']||'—'} $${deposit['匯款金額']||2000}`)+
       (deposit['退款申請時間']?mkDr('退款狀態',`<span class="bdg ${deposit['審核狀態']==='已退款'?'bok':'bw'}">${deposit['審核狀態']==='已退款'?'✓ 已退款':'待退款'}</span>`)+mkDr('退款資訊',`${deposit['退款銀行']||'—'} ${deposit['退款帳號']||'—'} $${deposit['退款金額']||'—'}`):mkDr('退款記錄','<span class="bdg bg">未退款</span>'))
-      :'<div style="color:var(--g400);font-size:13px;padding:8px 0">尚無押金記錄</div>'}</div>\`;
+      :'<div style="color:var(--g400);font-size:13px;padding:8px 0">尚無押金記錄</div>'}</div>`;
 }
 
 async function doReviewDoc(staffId,docType,status){
@@ -669,6 +667,7 @@ async function loadDocs(){
   const list=r.list||[];
   document.getElementById('nb-docs').textContent=list.length;
   const docLabel={ID_FRONT:'身份證正面',ID_BACK:'身份證反面',GOOD_CONDUCT:'良民證'};
+  // ✅ BUG 2 修正：ternary 的 false 分支改用反引號（原本用單引號導致 template literal 斷裂）
   document.getElementById('docs-list').innerHTML=list.length===0
     ?'<div class="al al-ok"><span class="al-icon">✓</span><div>目前無待審核文件</div></div>'
     :list.map(d=>`<div class="card">
@@ -679,7 +678,7 @@ async function loadDocs(){
         <div class="id-bar-item"><div class="ib-label">出生年月日</div><div class="ib-value">${d.staffDob||'—'}</div></div>
       </div>
       <div style="font-size:11px;color:var(--blue-dk);margin-bottom:10px">ℹ 請核對上方建檔資料與所上傳的文件是否一致</div>
-      ${d.fileUrl?`<a href="${d.fileUrl}" target="_blank" class="btn btn-sm btn-b" style="margin-bottom:10px">⬡ 開啟文件</a>':'<div class="img-ph">尚未上傳</div>'}
+      ${d.fileUrl?`<a href="${d.fileUrl}" target="_blank" class="btn btn-sm btn-b" style="margin-bottom:10px">⬡ 開啟文件</a>`:`<div class="img-ph">尚未上傳</div>`}
       <div class="bg-row" style="margin-top:10px">
         <button class="btn btn-sm btn-t" onclick="reviewDocList('${d['人員ID']}','${d['文件類型']}','APPROVED')">✓ 審核通過</button>
         <button class="btn btn-sm btn-r" onclick="reviewDocList('${d['人員ID']}','${d['文件類型']}','REJECTED')">✕ 退回</button>
@@ -730,12 +729,6 @@ async function loadRefund(){
   const tb=document.getElementById('ref-tbody');
   tb.innerHTML=list.map((d,i)=>`<tr class="ref-row" data-name="${d['姓名']}"><td><input type="checkbox" class="ref-cb" data-id="${d['人員ID']}" style="accent-color:var(--coral)"></td><td class="nm">${d['姓名']}</td><td>$${d['退款金額']||'—'}</td><td>${d['退款銀行']||'—'}</td><td><span id="ra${i}" style="font-family:monospace">${d['退款帳號']||'—'}</span>${d['退款帳號']?`<button class="copy-btn" onclick="copyEl('ra${i}')" style="margin-left:4px">複製</button>`:''}</td><td><span class="bdg ${d['審核狀態']==='已退款'?'bi':d['審核狀態']==='已審核'?'bok':'bw'}">${d['審核狀態']||'待審核'}</span></td><td style="font-size:11px">${d['審核時間']||'—'}</td><td style="font-size:11px">${d['退款時間']||'—'}</td></tr>`).join('')||'<tr><td colspan="8" style="text-align:center;padding:18px;color:var(--g400)">無退款申請</td></tr>';
 }
-async function batchReviewRefund(){
-  const ids=[...document.querySelectorAll('.ref-cb:checked')].map(c=>c.dataset.id);
-  if(!ids.length){toast('請先勾選項目');return;}
-  const r=await run('reviewRefund',{token:TOKEN,staffIdsJson:JSON.stringify(ids)});
-  if(!r.ok){toast(r.error);return;}toast(`✓ 審核通過 ${ids.length} 筆`);document.getElementById('ref-all').checked=false;loadRefund();
-}
 async function batchCompleteRefund(){
   const ids=[...document.querySelectorAll('.ref-cb:checked')].map(c=>c.dataset.id);
   if(!ids.length){toast('請先勾選項目');return;}
@@ -783,7 +776,7 @@ async function loadRegions(){
   const r=await run('getRegions',{token:TOKEN});if(!r.ok)return;
   const list=r.regions||[];
   document.getElementById('regions-list').innerHTML=list.map(rg=>`<div class="card">
-    <div class="card-hd"><div class="card-title">${rg['地區']}</div><span class="card-act" onclick="editRegionAcc('${rg['地區']}','${rg['押金帳號']||''}')">編輯押金帳號</span></div>
+    <div class="card-hd"><div class="card-title">${rg['地區']}</div><span class="card-act" onclick="editRegion('${rg['地區']}')">編輯</span></div>
     <div style="font-size:11px;font-weight:700;color:var(--g400);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">公司資訊</div>
     ${mkDr('公司名稱',rg['公司名稱'])}${mkDr('統一編號',rg['統一編號'])}${mkDr('公司地址',rg['公司地址'])}${mkDr('公司電話',rg['公司電話'])}
     <div style="height:6px"></div>
@@ -796,7 +789,6 @@ async function loadRegions(){
   </div>`).join('')+`<div class="card" style="border-style:dashed;text-align:center;color:var(--g400);padding:24px;cursor:pointer" onclick="addRegion()"><div style="font-size:20px;margin-bottom:6px">+</div><div>新增地區(台中,高雄…)</div></div>`;
 }
 function editRegion(name) {
-  // 找出目前地區資料
   run('getRegions',{token:TOKEN}).then(r=>{
     if(!r.ok){toast(r.error);return;}
     const rg = r.regions.find(x=>x['地區']===name)||{};
@@ -839,7 +831,7 @@ function editRegion(name) {
 function addRegion(){
   var name=prompt("新地區名稱(如:台中)");if(!name)return;
   var obj={"地區":name,"公司名稱":"檸檬專業清潔有限公司","統一編號":"42627791","公司地址":"","公司電話":"02-27002386","負責人":"謝曜聲","押金銀行":"富邦銀行(012)","押金帳號":"","Drive新訓建檔":"","Drive新訓退訓":"","Drive線上專員":"","Sheets發信工作表":"","負責管理員Email":""};
-  run("saveRegion",{token:TOKEN,regionJson:JSON.stringify(obj)}).then(function(r){if(!r.ok)toast(r.error);else{toast("地區已新增,請至地區設定填入 Drive/Sheets ID");loadRegions();}});
+  run("saveRegion",{token:TOKEN,region:obj}).then(function(r){if(!r.ok)toast(r.error);else{toast("地區已新增,請至地區設定填入 Drive/Sheets ID");loadRegions();}});
 }
 
 // ════════════════════
@@ -855,21 +847,21 @@ function hideErr(id){document.getElementById(id).style.display='none';}
 let _tt=null;
 function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');clearTimeout(_tt);_tt=setTimeout(()=>el.classList.remove('show'),2800);}
 
-// ── 診斷工具(改用 fetch)──
+// ── 診斷工具 ──
 function runDiag() {
   const out = document.getElementById('diag-result');
   out.innerHTML = '<div style="color:var(--blue-dk)">⏳ 測試中(最多 15 秒)…</div>';
-
   const timer = setTimeout(() => {
-    out.innerHTML = '<div style="color:var(--red);background:var(--red-lt);padding:10px;border-radius:6px;line-height:1.7">❌ <strong>逾時(15秒無回應)</strong><br><br>請確認:<br>1. 從部署後的 exec 網址開啟(非 Apps Script 預覽)<br>2. 存取權:所有人<br>3. 版本選新版本後再更新</div>';
+    out.innerHTML = '<div style="color:var(--red);background:var(--red-lt);padding:10px;border-radius:6px;line-height:1.7">❌ <strong>逾時(15秒無回應)</strong></div>';
   }, 15000);
-
-  fetch(API_URL + '?action=getRegionNames', { redirect: 'follow' }).then(r => r.json()).then(r => {
+  fetch(API_URL + '/api/get-region-names', {method:'POST',headers:{'Content-Type':'application/json'},body:'{}'}).then(r=>r.json()).then(r=>{
     clearTimeout(timer);
-    out.innerHTML = '<div style="color:var(--teal-dk);background:var(--teal-lt);padding:10px;border-radius:6px">✅ <strong>連線正常!</strong> 請用 jenny@lemonclean.com.tw / jenny 登入.</div>';
-  }).catch(err => {
+    out.innerHTML = r.ok
+      ? '<div style="color:var(--teal-dk);background:var(--teal-lt);padding:10px;border-radius:6px">✅ <strong>連線正常!</strong></div>'
+      : '<div style="color:var(--red);background:var(--red-lt);padding:10px;border-radius:6px">⚠ 連線成功但 API 回傳錯誤: '+r.error+'</div>';
+  }).catch(err=>{
     clearTimeout(timer);
-    out.innerHTML = '<div style="color:var(--red);background:var(--red-lt);padding:10px;border-radius:6px;line-height:1.7">❌ fetch 失敗:'+err.message+'<br><br>請確認已重新部署(版本選新版本,存取權:所有人)</div>';
+    out.innerHTML = '<div style="color:var(--red);background:var(--red-lt);padding:10px;border-radius:6px">❌ fetch 失敗:'+err.message+'</div>';
   });
 }
 </script>
