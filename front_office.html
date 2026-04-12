@@ -874,33 +874,68 @@ function triggerUpload(t) {
 }
 
 async function handleFileUpload() {
-  const file = document.getElementById('file-input').files[0];
+  const input = document.getElementById('file-input');
+  const file = input.files[0];
   if (!file) return;
-  if (file.size > 10*1024*1024) { 
-    toast('檔案不可超過 10MB'); 
-    return; 
+
+  if (file.size > 10 * 1024 * 1024) {
+    toast('檔案不可超過 10MB');
+    input.value = '';
+    return;
+  }
+
+  if (!PROFILE || !PROFILE.staff || !PROFILE.staff.name) {
+    toast('抓不到新人姓名，請先重新登入再試一次');
+    input.value = '';
+    return;
   }
 
   toast('上傳中,請稍候…');
-  const b64 = await fileToB64(file);
 
-  const r = await run('uploadDoc', {
-    token: TOKEN,
-    docType: _uploadType,
-    fileData: b64,
-    fileName: file.name
-  });
+  try {
+    const b64 = await fileToB64(file);
 
-  if (!r.ok) { 
-    toast('上傳失敗:' + r.error); 
-    return; 
+    const payload = {
+      token: TOKEN,
+      staffName: PROFILE.staff.name,
+      docType: _uploadType,
+      fileName: file.name,
+      mimeType: file.type,
+      fileData: b64
+    };
+
+    const res = await fetch('https://script.google.com/macros/s/AKfycbxm9v8K14r-7QfVGGi857mQoKfGtyZUcs5fkkbVg7kd3VK2Aln5c5ozKGH3L1IiYUMR/exec', {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(payload),
+      redirect: 'follow'
+    });
+
+    const text = await res.text();
+    let r = {};
+    try {
+      r = JSON.parse(text);
+    } catch (e) {
+      throw new Error('GAS 回傳格式錯誤：' + text.slice(0, 120));
+    }
+
+    if (!r.ok) {
+      throw new Error(r.error || '未知錯誤');
+    }
+
+    alert(JSON.stringify(r));
+
+    markUploadedUI(_uploadType, r);
+    await loadProfile();
+    renderDocs();
+    renderOverview();
+
+    toast('✓ 上傳成功!');
+    input.value = '';
+  } catch (e) {
+    toast('上傳失敗:' + e.message);
+    input.value = '';
   }
-
-  await loadProfile();
-  renderDocs();
-  renderOverview();
-  toast('✓ 上傳成功!');
-  document.getElementById('file-input').value = '';
 }
 
 function fileToB64(file) {
