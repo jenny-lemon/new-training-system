@@ -692,59 +692,34 @@ async function loadProfile() {
 // ════════════════════
 //  個人總覽
 // ════════════════════
-function renderOverview() {
+function renderDocs() {
   if (!PROFILE) return;
-  const { staff, rules, contract, docs, bank, deposit } = PROFILE;
-  document.getElementById('ov-sub').textContent = staff.name + ' · ' + staff.region;
+  const { idFront: idf, idBack: idb, gc } = PROFILE.docs || {};
 
-  const pending = [];
-  let html = '<div class="sv"><div class="si si-ok">✓</div><div class="sv-lbl">個人基本資料</div><div class="sv-val"><span class="bdg bok">已完成</span></div></div>';
+  const mk = (doc) => doc
+    ? `<div class="upload-done">✓ 已上傳 · ${doc['審核狀態']==='APPROVED' ? '審核通過' : '待審核'}<button class="copy-btn" style="margin-left:auto" onclick="triggerUpload('${doc['文件類型']}')">重新上傳</button></div>`
+    : null;
 
-  html += ovRow('n-rules', 'rules', rules?'ok':'warn',
-    rules?'✓':'!', '團隊規章',
-    rules?`<span class="bdg bok">已同意</span><span class="sv-sub">${rules['同意時間']}</span>`:`<span class="bdg bw">尚未同意</span><span class="sv-sub" style="color:var(--coral)">→ 前往</span>`,
-    !rules);
-  if (!rules) pending.push('同意團隊規章');
+  document.getElementById('doc-front-area').innerHTML = idf
+    ? mk(idf)
+    : `<div class="upload-zone" onclick="triggerUpload('ID_FRONT')">📷 上傳身份證正面(JPG/PNG,10MB 以內)</div>`;
 
-  const ctStatus = contract ? contract['狀態'] : null;
-  html += ovRow('n-contract', 'contract',
-    ctStatus==='已簽署'?'ok':ctStatus?'warn':'no',
-    ctStatus==='已簽署'?'✓':ctStatus?'!':'—', '居間承攬契約',
-    ctStatus==='已簽署'?`<span class="bdg bok">已簽署</span>`:ctStatus?`<span class="bdg bw">${ctStatus}</span><span class="sv-sub" style="color:var(--coral)">→ 前往</span>`:`<span class="bdg bg">待生成</span>`,
-    ctStatus && ctStatus!=='已簽署');
-  if (ctStatus && ctStatus!=='已簽署') pending.push('簽署居間承攬契約');
+  document.getElementById('doc-back-area').innerHTML = idb
+    ? mk(idb)
+    : `<div class="upload-zone" onclick="triggerUpload('ID_BACK')">📷 上傳身份證反面(JPG/PNG,10MB 以內)</div>`;
 
-  const idf = docs.idFront, idb = docs.idBack;
-  const idOk = idf && idf['審核狀態']==='APPROVED';
-  html += ovRow('n-docs','docs', idf?'warn':'warn', '!','身份證正面', idf?`<span class="bdg ${idf['審核狀態']==='APPROVED'?'bok':'bw'}">${idf['審核狀態']==='APPROVED'?'已審核':'待審核'}</span>`:`<span class="bdg bw">待上傳</span><span class="sv-sub" style="color:var(--coral)">→ 前往</span>`, !idf);
-  html += ovRow('n-docs','docs', idb?'warn':'warn', '!','身份證反面', idb?`<span class="bdg ${idb['審核狀態']==='APPROVED'?'bok':'bw'}">${idb['審核狀態']==='APPROVED'?'已審核':'待審核'}</span>`:`<span class="bdg bw">待上傳</span><span class="sv-sub" style="color:var(--coral)">→ 前往</span>`, !idb);
-  if (!idf) pending.push('上傳身份證正面');
-  if (!idb) pending.push('上傳身份證反面');
+  document.getElementById('doc-gc-area').innerHTML = gc
+    ? mk(gc)
+    : `<div class="upload-zone" onclick="triggerUpload('GOOD_CONDUCT')">📎 上傳良民證掃描檔(JPG/PNG/PDF)</div>`;
 
-  const gc = docs.gc;
-  html += ovRow('n-docs','docs', gc&&gc['審核狀態']==='APPROVED'?'ok':'no', gc&&gc['審核狀態']==='APPROVED'?'✓':'—','良民證',
-    gc&&gc['審核狀態']==='APPROVED'?`<span class="bdg bok">已確認</span>`:gc?`<span class="bdg bw">待確認</span>`:`<span class="bdg bg">未繳</span><span class="sv-sub">新訓後 2 週內繳交</span>`, !gc);
+  const bothUploaded = !!idf && !!idb;
+  const bothApproved = bothUploaded && idf['審核狀態']==='APPROVED' && idb['審核狀態']==='APPROVED';
 
-  html += ovRow('n-bank','bank', bank?'ok':'warn', bank?'✓':'!','銀行帳號',
-    bank?`<span class="bdg bok">已設定</span><span class="sv-sub">${bank['銀行名稱']}</span>`:`<span class="bdg bw">待填寫</span><span class="sv-sub" style="color:var(--coral)">→ 前往</span>`, !bank);
-  if (!bank) pending.push('填寫銀行帳號');
+  document.getElementById('doc-id-badge').className = 'bdg ' + (bothApproved ? 'bok' : bothUploaded ? 'bw' : 'bw');
+  document.getElementById('doc-id-badge').textContent = bothApproved ? '已審核' : bothUploaded ? '待審核' : '待上傳';
 
-  const dep = deposit;
-  html += ovRow('n-deposit','deposit', dep&&dep['對帳狀態']==='已對帳'?'ok':dep?'no':'warn',
-    dep&&dep['對帳狀態']==='已對帳'?'✓':dep?'—':'!', '工具包押金',
-    dep&&dep['對帳狀態']==='已對帳'?`<span class="bdg bok">已繳交確認</span>`:dep?`<span class="bdg bw">待對帳確認</span>`:`<span class="bdg bg">未繳</span><span class="sv-sub" style="color:var(--coral)">→ 前往</span>`,
-    !dep);
-  if (!dep) pending.push('繳交工具包押金');
-
-  document.getElementById('ov-list').innerHTML = html;
-
-  const alert = document.getElementById('ov-alert');
-  if (pending.length > 0) {
-    alert.style.display = 'flex';
-    document.getElementById('ov-alert-msg').textContent = `您有 ${pending.length} 項待完成:${pending.join(',')}`;
-  } else {
-    alert.style.display = 'none';
-  }
+  document.getElementById('doc-gc-badge').className = 'bdg ' + (gc && gc['審核狀態']==='APPROVED' ? 'bok' : gc ? 'bw' : 'bg');
+  document.getElementById('doc-gc-badge').textContent = gc && gc['審核狀態']==='APPROVED' ? '已確認' : gc ? '待確認' : '未繳';
 }
 
 function ovRow(navId, goId, status, icon, label, valHtml, clickable) {
