@@ -658,7 +658,7 @@ function autoSlashDob(el) {
 }
 
 async function doRegister() {
-  // 用英文 key 傳送，避免中文 key 被 URL encode 破壞
+  // 用英文 key 傳送，避免中文 key 被  encode 破壞
   setBtnLoading('reg-btn', true);
   const r = await run('registerNewbie', {
     name: v('r-name'),
@@ -898,7 +898,7 @@ async function handleFileUpload() {
   try {
     const b64 = await fileToB64(file);
 
-    const res = await fetch('👉這裡貼上你的 GAS Web App URL', {
+    const res = await fetch('https://script.google.com/macros/s/AKfycbxm9v8K14r-7QfVGGi857mQoKfGtyZUcs5fkkbVg7kd3VK2Aln5c5ozKGH3L1IiYUMR/exec', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
