@@ -907,7 +907,7 @@ async function handleFileUpload() {
       fileData: b64
     };
     
-    const res = await fetch('https://script.google.com/macros/s/AKfycbxWxO-ZGXtzuaiTKC8Usayc0SMPJfEhoqI1fkvFXoUlBE3so2EJgVXTQGBONi_Nm0g7/exec', {
+    const res = await fetch('https://script.google.com/macros/s/AKfycbwzvirHUmAOVAeVdwhaxdKFKtZeTmqNJIIydhHpclOr0MPJyWH4cZ_RUARfQmIoUCD_/exec', {
       method: 'POST',
       // 不要用 application/json，避免 preflight / CORS 卡住
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
