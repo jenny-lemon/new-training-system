@@ -898,19 +898,29 @@ async function handleFileUpload() {
   try {
     const b64 = await fileToB64(file);
 
+    const payload = {
+      token: TOKEN,
+      docType: _uploadType,
+      fileName: file.name,
+      mimeType: file.type,
+      fileData: b64
+    };
+
     const res = await fetch('https://script.google.com/macros/s/AKfycbxm9v8K14r-7QfVGGi857mQoKfGtyZUcs5fkkbVg7kd3VK2Aln5c5ozKGH3L1IiYUMR/exec', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        token: TOKEN,
-        docType: _uploadType,
-        fileName: file.name,
-        mimeType: file.type,
-        fileData: b64
-      })
+      // 不要用 application/json，避免 preflight / CORS 卡住
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(payload),
+      redirect: 'follow'
     });
 
-    const r = await res.json();
+    const text = await res.text();
+    let r = {};
+    try {
+      r = JSON.parse(text);
+    } catch (e) {
+      throw new Error('GAS 回傳不是 JSON：' + text.slice(0, 120));
+    }
 
     if (!r.ok) {
       toast('上傳失敗:' + (r.error || '未知錯誤'));
@@ -918,10 +928,7 @@ async function handleFileUpload() {
       return;
     }
 
-    // 先更新畫面，避免一定要靠原本 my-profile 才顯示成功
     markUploadedUI(_uploadType, r);
-
-    // 若你原本後端 profile 沒同步寫回，這兩行失敗也不影響上傳
     await loadProfile();
     renderDocs();
     renderOverview();
