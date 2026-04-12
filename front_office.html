@@ -893,49 +893,50 @@ async function handleFileUpload() {
   toast('上傳中,請稍候…');
 
   try {
-  const b64 = await fileToB64(file);
+    const b64 = await fileToB64(file);
 
-  const payload = {
-    token: TOKEN,
-    staffName: '林小明',
-    docType: _uploadType,
-    fileName: file.name,
-    mimeType: file.type,
-    fileData: b64
-  };
+    const payload = {
+      token: TOKEN,
+      staffName: '林小明',
+      docType: _uploadType,
+      fileName: file.name,
+      mimeType: file.type,
+      fileData: b64
+    };
 
-  console.log('UPLOAD PAYLOAD', payload);
+    console.log('UPLOAD PAYLOAD', payload);
 
-  const url = 'https://script.google.com/macros/s/AKfycbxwQ5zFxoFIGdI9BMV4xJwigXe216HyiTOTZwVrLsRNh-UmBjHytuOkt8RK_X6nnLIQ/exec';
-  console.log('UPLOAD URL', url);
+    const url = 'https://script.google.com/macros/s/AKfycbxwQ5zFxoFIGdI9BMV4xJwigXe216HyiTOTZwVrLsRNh-UmBjHytuOkt8RK_X6nnLIQ/exec';
+    console.log('UPLOAD URL', url);
 
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-    body: JSON.stringify(payload),
-    redirect: 'follow'
-  });
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(payload),
+      redirect: 'follow'
+    });
 
-  console.log('UPLOAD STATUS', res.status, res.type, res.redirected, res.url);
+    console.log('UPLOAD STATUS', res.status, res.type, res.redirected, res.url);
 
-  const text = await res.text();
-  console.log('UPLOAD RAW RESPONSE', text);
-  alert(text);
+    const text = await res.text();
+    console.log('UPLOAD RAW RESPONSE', text);
+    alert(text);
 
-  const r = JSON.parse(text);
-  if (!r.ok) throw new Error(r.error || '未知錯誤');
+    const r = JSON.parse(text);
+    if (!r.ok) throw new Error(r.error || '未知錯誤');
 
-  markUploadedUI(_uploadType, r);
-  await loadProfile();
-  renderDocs();
-  renderOverview();
-  toast('✓ 上傳成功!');
-  input.value = '';
-} catch (e) {
-  console.error('UPLOAD ERROR', e);
-  alert('UPLOAD ERROR: ' + (e && e.message ? e.message : e));
-  toast('上傳失敗:' + (e && e.message ? e.message : e));
-  input.value = '';
+    markUploadedUI(_uploadType, r);
+    await loadProfile();
+    renderDocs();
+    renderOverview();
+    toast('✓ 上傳成功!');
+    input.value = '';
+  } catch (e) {
+    console.error('UPLOAD ERROR', e);
+    alert('UPLOAD ERROR: ' + (e && e.message ? e.message : e));
+    toast('上傳失敗:' + (e && e.message ? e.message : e));
+    input.value = '';
+  }
 }
 
 function fileToB64(file) {
