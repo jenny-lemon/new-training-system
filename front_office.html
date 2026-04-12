@@ -919,23 +919,24 @@ async function handleFileUpload() {
     console.log('UPLOAD STATUS', res.status, res.type, res.redirected, res.url);
 
     const text = await res.text();
-    console.log('UPLOAD RAW RESPONSE', text);
-    alert(text);
-
     const r = JSON.parse(text);
     if (!r.ok) throw new Error(r.error || '未知錯誤');
 
-    markUploadedUI(_uploadType, r);
-    await loadProfile();
+    // 前台先直接更新本地 PROFILE，讓 docs 頁和總覽頁同步
+    applyUploadedDocToProfile(_uploadType, r);
+
     renderDocs();
     renderOverview();
+
     toast('✓ 上傳成功!');
     input.value = '';
   } catch (e) {
     console.error('UPLOAD ERROR', e);
-    alert('UPLOAD ERROR: ' + (e && e.message ? e.message : e));
     toast('上傳失敗:' + (e && e.message ? e.message : e));
     input.value = '';
+
+    // 失敗後還原畫面
+    renderDocs();
   }
 }
 
