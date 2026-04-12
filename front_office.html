@@ -900,12 +900,13 @@ async function handleFileUpload() {
 
     const payload = {
       token: TOKEN,
+      staffName: PROFILE && PROFILE.staff ? PROFILE.staff.name : '',
       docType: _uploadType,
       fileName: file.name,
       mimeType: file.type,
       fileData: b64
     };
-
+    
     const res = await fetch('https://script.google.com/macros/s/AKfycbxWxO-ZGXtzuaiTKC8Usayc0SMPJfEhoqI1fkvFXoUlBE3so2EJgVXTQGBONi_Nm0g7/exec', {
       method: 'POST',
       // 不要用 application/json，避免 preflight / CORS 卡住
