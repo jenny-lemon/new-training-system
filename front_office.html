@@ -912,6 +912,8 @@ async function handleFileUpload() {
     });
 
     const text = await res.text();
+    alert(text);
+
     let r = {};
     try {
       r = JSON.parse(text);
