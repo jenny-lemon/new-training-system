@@ -555,7 +555,7 @@ async function run(action, data) {
     const path = actionMap[action] || '/api/' + action.replace(/([A-Z])/g, '-$1').toLowerCase();
     const res = await fetch(API_URL + path, {
       method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data || {}),
     });
     if (!res.ok) throw new Error('HTTP ' + res.status);
