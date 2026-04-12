@@ -897,7 +897,7 @@ async function handleFileUpload() {
 
     const payload = {
       token: TOKEN,
-      staffName: '林小明',
+      staffName: PROFILE && PROFILE.staff ? PROFILE.staff.name : '',
       docType: _uploadType,
       fileName: file.name,
       mimeType: file.type,
