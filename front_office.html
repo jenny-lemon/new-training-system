@@ -940,6 +940,25 @@ async function handleFileUpload() {
   }
 }
 
+function setUploadingUI(docType) {
+  const areaMap = {
+    ID_FRONT: 'doc-front-area',
+    ID_BACK: 'doc-back-area',
+    GOOD_CONDUCT: 'doc-gc-area',
+    CONTRACT_SIGNED: 'contract-upload-area'
+  };
+
+  const areaId = areaMap[docType];
+  const area = areaId ? document.getElementById(areaId) : null;
+  if (!area) return;
+
+  area.innerHTML = `
+    <div class="upload-zone" style="cursor:default;color:var(--coral);border-color:var(--coral);background:var(--coral-lt);">
+      ⏳ 上傳中，請稍候，請勿重新整理網頁
+    </div>
+  `;
+}
+  
 function fileToB64(file) {
   return new Promise(res => {
     const r = new FileReader();
