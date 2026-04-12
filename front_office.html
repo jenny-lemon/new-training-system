@@ -868,91 +868,45 @@ function renderDocs() {
   document.getElementById('doc-gc-badge').textContent = gc&&gc['審核狀態']==='APPROVED'?'已確認':gc?'待確認':'未繳';
 }
 
-function triggerUpload(t) {
-  _uploadType = t;
-  const input = document.getElementById('file-input');
-  if (!input) return;
-
-  if (t === 'GOOD_CONDUCT' || t === 'CONTRACT_SIGNED') {
-    input.accept = 'image/jpeg,image/png,application/pdf';
-  } else {
-    input.accept = 'image/jpeg,image/png';
-  }
-
-  input.click();
+function triggerUpload(t) { 
+  _uploadType = t; 
+  document.getElementById('file-input').click(); 
 }
 
 async function handleFileUpload() {
-  const input = document.getElementById('file-input');
-  const file = input.files[0];
+  const file = document.getElementById('file-input').files[0];
   if (!file) return;
-
-  if (file.size > 10 * 1024 * 1024) {
-    toast('檔案不可超過 10MB');
-    input.value = '';
-    return;
+  if (file.size > 10*1024*1024) { 
+    toast('檔案不可超過 10MB'); 
+    return; 
   }
 
   toast('上傳中,請稍候…');
+  const b64 = await fileToB64(file);
 
-  try {
-    const b64 = await fileToB64(file);
+  const r = await run('uploadDoc', {
+    token: TOKEN,
+    docType: _uploadType,
+    fileData: b64,
+    fileName: file.name
+  });
 
-    const payload = {
-      token: TOKEN,
-      staffName: PROFILE && PROFILE.staff ? PROFILE.staff.name : '',
-      docType: _uploadType,
-      fileName: file.name,
-      mimeType: file.type,
-      fileData: b64
-    };
-    
-    const res = await fetch('https://script.google.com/macros/s/AKfycbwimlPQCkfQtD_VyevA1Z_zNVlK4_YGXynIGY9c-CzbfQtctAbsNJFPtGsgMJxazSvg/exec', {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({
-        token: TOKEN,
-        staffName: PROFILE && PROFILE.staff ? PROFILE.staff.name : '',
-        docType: _uploadType,
-        fileName: file.name,
-        mimeType: file.type,
-        fileData: b64
-      }),
-      redirect: 'follow'
-    });
-
-    const text = await res.text();
-    let r = {};
-    try {
-      r = JSON.parse(text);
-    } catch (e) {
-      throw new Error('GAS 回傳不是 JSON：' + text.slice(0, 120));
-    }
-
-    if (!r.ok) {
-      toast('上傳失敗:' + (r.error || '未知錯誤'));
-      input.value = '';
-      return;
-    }
-
-    markUploadedUI(_uploadType, r);
-    await loadProfile();
-    renderDocs();
-    renderOverview();
-
-    toast('✓ 上傳成功!');
-    input.value = '';
-  } catch (e) {
-    toast('上傳失敗:' + e.message);
-    input.value = '';
+  if (!r.ok) { 
+    toast('上傳失敗:' + r.error); 
+    return; 
   }
+
+  await loadProfile();
+  renderDocs();
+  renderOverview();
+  toast('✓ 上傳成功!');
+  document.getElementById('file-input').value = '';
 }
 
 function fileToB64(file) {
-  return new Promise((resolve, reject) => {
+  return new Promise(res => {
     const r = new FileReader();
-    r.onload = e => resolve(e.target.result); // 保留 data:mime;base64,xxxx 完整格式
-    r.onerror = reject;
+    r.onload = e => res(e.target.result.split(',')[1]);
     r.readAsDataURL(file);
   });
 }
