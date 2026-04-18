@@ -808,12 +808,11 @@ function renderOverview() {
       r ? `<span class="bdg bok">已同意</span><span class="sv-sub">${r['同意時間']}</span>`
         : `<span class="bdg bw">待同意</span>`, true),
     ovRow('n-contract','contract',
-      (c && c['狀態']==='已簽署' && ctDoc && ctDoc['審核狀態']==='APPROVED') ? 'ok'
-      : (c ? 'warn') : 'no',
-      (c && c['狀態']==='已簽署' && ctDoc && ctDoc['審核狀態']==='APPROVED') ? '✓' : c ? '!' : '–',
+      !c ? 'no' : (ctDoc && ctDoc['審核狀態']==='APPROVED') ? 'ok' : 'warn',
+      !c ? '–'  : (ctDoc && ctDoc['審核狀態']==='APPROVED') ? '✓' : '!',
       '居間承攬契約',
       !c ? `<span class="bdg bg">待生成</span>`
-         : ctDoc && ctDoc['審核狀態']==='APPROVED' ? `<span class="bdg bok">審核通過</span>`
+         : (ctDoc && ctDoc['審核狀態']==='APPROVED') ? `<span class="bdg bok">審核通過</span>`
          : ctDoc ? `<span class="bdg bw">待審核</span>`
          : `<span class="bdg bw">待上傳簽名</span>`, true),
     ovRow('n-docs','docs',
