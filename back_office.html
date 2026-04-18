@@ -128,6 +128,10 @@ button,input,select,textarea{font-family:var(--font);}button{cursor:pointer;}a{c
 .spinner{width:16px;height:16px;border:2px solid var(--g200);border-top-color:var(--coral);border-radius:50%;animation:spin .8s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg);}}
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1A1917;color:#fff;padding:10px 20px;border-radius:var(--r8);font-size:13px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:999;max-width:90vw;text-align:center;}.toast.show{opacity:1;}
+
+/* 契約審核分隔線 */
+.doc-section-hd{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--g400);padding:8px 0 6px;margin-top:4px;border-top:1px solid var(--g100);}
+.doc-section-hd:first-child{border-top:none;margin-top:0;}
 </style>
 </head>
 <body>
@@ -171,7 +175,7 @@ button,input,select,textarea{font-family:var(--font);}button{cursor:pointer;}a{c
         <div class="nav-sec" onclick="toggleGroup(this)">新人管理 <span class="nav-sec-arrow open">▾</span></div>
         <div class="nav-items">
           <div class="nav-item" id="n-newbies" onclick="go('newbies',this)"><div class="nav-dot"></div>新人總覽</div>
-          <div class="nav-item" id="n-docs" onclick="go('docs',this)"><div class="nav-dot"></div>證件審核<span class="nb" id="nb-docs">0</span></div>
+          <div class="nav-item" id="n-docs" onclick="go('docs',this)"><div class="nav-dot"></div>文件審核<span class="nb" id="nb-docs">0</span></div>
           <div class="nav-item" id="n-bank" onclick="go('bank',this)"><div class="nav-dot"></div>銀行帳號管理</div>
         </div>
       </div>
@@ -202,7 +206,7 @@ button,input,select,textarea{font-family:var(--font);}button{cursor:pointer;}a{c
         <div class="topbar"><div><div class="ph">新人帳號管理</div><div class="ps">審核新人填寫資料後開通帳號</div></div></div>
         <div class="card">
           <div class="card-hd"><div class="card-title">待審核開通 (<span id="pending-count">0</span>)</div></div>
-          <div class="al al-w"><span class="al-icon">⚠</span><div>審核開通後系統將<strong>立即產出居間承攬契約</strong>存至 Google Drive,新人登入即可線上簽署.</div></div>
+          <div class="al al-w"><span class="al-icon">⚠</span><div>審核開通後系統將<strong>立即產出居間承攬契約</strong>存至 Google Drive，新人登入後下載簽名再上傳。</div></div>
           <div style="overflow:auto">
             <table class="tbl" style="min-width:700px">
               <thead><tr><th>姓名</th><th>身份證字號</th><th>手機</th><th>Email</th><th>地區</th><th>填寫時間</th><th>操作</th></tr></thead>
@@ -233,7 +237,7 @@ button,input,select,textarea{font-family:var(--font);}button{cursor:pointer;}a{c
         <div class="topbar"><div><div class="ph">新人總覽</div><div class="ps">最新在最上面，每頁 20 人</div></div><button class="btn btn-p btn-sm" onclick="exportAllStaff()">⬇ 批次匯出</button></div>
         <div class="search-bar"><span>🔍</span><input type="text" id="newbies-search" placeholder="搜尋姓名…" oninput="searchNewbies()"></div>
         <div class="card" style="padding:0;overflow:auto">
-          <table class="tbl" style="min-width:880px">
+          <table class="tbl" style="min-width:900px">
             <thead><tr><th>姓名</th><th>地區</th><th>規章</th><th>契約</th><th>身份證</th><th>良民證</th><th>銀行</th><th>押金</th><th>狀態</th><th>操作</th></tr></thead>
             <tbody id="newbies-tbody"></tbody>
           </table>
@@ -241,10 +245,29 @@ button,input,select,textarea{font-family:var(--font);}button{cursor:pointer;}a{c
         </div>
       </div>
 
-      <!-- 證件審核 -->
+      <!-- 文件審核（身份證 + 良民證 + 承攬契約） -->
       <div id="p-docs" class="bp" style="display:none">
-        <div class="topbar"><div><div class="ph">證件審核</div><div class="ps">身份證 / 良民證</div></div></div>
-        <div id="docs-list"><div class="loading"><div class="spinner"></div>載入中…</div></div>
+        <div class="topbar"><div><div class="ph">文件審核</div><div class="ps">身份證 / 良民證 / 居間承攬契約</div></div></div>
+
+        <!-- 契約簽名待審 -->
+        <div id="contracts-section">
+          <div style="font-size:13px;font-weight:700;color:var(--g800);margin-bottom:10px;display:flex;align-items:center;gap:8px">
+            📋 居間承攬契約（已簽名掃描）
+            <span class="bdg bc" id="ct-pending-badge" style="display:none">待審核</span>
+          </div>
+          <div id="contracts-list"><div class="loading"><div class="spinner"></div>載入中…</div></div>
+        </div>
+
+        <div style="height:20px"></div>
+
+        <!-- 身份證 / 良民證 待審 -->
+        <div>
+          <div style="font-size:13px;font-weight:700;color:var(--g800);margin-bottom:10px;display:flex;align-items:center;gap:8px">
+            🪪 身份證 / 良民證
+            <span class="bdg bw" id="id-pending-badge" style="display:none">待審核</span>
+          </div>
+          <div id="docs-list"><div class="loading"><div class="spinner"></div>載入中…</div></div>
+        </div>
       </div>
 
       <!-- 銀行帳號管理 -->
@@ -262,7 +285,7 @@ button,input,select,textarea{font-family:var(--font);}button{cursor:pointer;}a{c
       <!-- 匯款對帳 -->
       <div id="p-deposit" class="bp" style="display:none">
         <div class="topbar"><div><div class="ph">工具包押金</div></div></div>
-        <div class="al al-i"><span class="al-icon">ℹ</span><div>勾選後按"批次對帳確認",系統自動記錄時間.</div></div>
+        <div class="al al-i"><span class="al-icon">ℹ</span><div>勾選後按"批次對帳確認"，系統自動記錄時間。</div></div>
         <div class="search-bar"><span>🔍</span><input type="text" placeholder="搜尋姓名…" oninput="filterTbl('dep-tbody',this.value)"></div>
         <div class="card" style="padding:0;overflow:auto">
           <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--g50);border-bottom:1px solid var(--bdr)">
@@ -280,7 +303,7 @@ button,input,select,textarea{font-family:var(--font);}button{cursor:pointer;}a{c
       <!-- 退款審核 -->
       <div id="p-refund" class="bp" style="display:none">
         <div class="topbar"><div><div class="ph">退款管理</div></div></div>
-        <div class="al al-i"><span class="al-icon">ℹ</span><div>"審核通過"後才可"標記退款完成".退款完成後帳號將<strong>自動停用</strong>.</div></div>
+        <div class="al al-i"><span class="al-icon">ℹ</span><div>"審核通過"後才可"標記退款完成"。退款完成後帳號將<strong>自動停用</strong>。</div></div>
         <div class="search-bar"><span>🔍</span><input type="text" placeholder="搜尋姓名…" oninput="filterTbl('ref-tbody',this.value)"></div>
         <div class="card" style="padding:0;overflow:auto">
           <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--g50);border-bottom:1px solid var(--bdr);flex-wrap:wrap">
@@ -303,7 +326,7 @@ button,input,select,textarea{font-family:var(--font);}button{cursor:pointer;}a{c
           <div class="form-grid">
             <div class="fi"><label>姓名 *</label><input id="adm-name" type="text"></div>
             <div class="fi"><label>Email *</label><input id="adm-email" type="email"></div>
-            <div class="fi"><label>密碼 *(至少 6 碼)</label><input id="adm-pwd" type="password" placeholder="直接填入明碼,系統自動加密"></div>
+            <div class="fi"><label>密碼 *(至少 6 碼)</label><input id="adm-pwd" type="password" placeholder="直接填入明碼，系統自動加密"></div>
             <div class="fi"><label>角色</label>
               <select id="adm-role"><option value="MANAGER">業務負責人</option><option value="SUPER">超級管理員</option></select>
             </div>
@@ -311,7 +334,7 @@ button,input,select,textarea{font-family:var(--font);}button{cursor:pointer;}a{c
               <select id="adm-regions"><option value="全部地區">全部地區</option><option value="台北">台北</option><option value="台中">台中</option><option value="高雄">高雄</option></select>
             </div>
           </div>
-          <div class="al al-i"><span class="al-icon">ℹ</span><div>密碼請直接填入明碼(如:Lemon2025!),系統會自動加密儲存,Sheets 裡只會看到加密後的字串.</div></div>
+          <div class="al al-i"><span class="al-icon">ℹ</span><div>密碼請直接填入明碼（如：Lemon2025!），系統會自動加密儲存。</div></div>
           <button class="btn btn-p" onclick="doCreateAdmin()">建立管理員帳號</button>
         </div>
         <div class="card" style="padding:0;overflow:auto">
@@ -343,7 +366,7 @@ button,input,select,textarea{font-family:var(--font);}button{cursor:pointer;}a{c
       <div class="tabs">
         <button class="tab on" onclick="swTab('pm',0,this)">基本資料</button>
         <button class="tab" onclick="swTab('pm',1,this)">規章/契約</button>
-        <button class="tab" onclick="swTab('pm',2,this)">證件</button>
+        <button class="tab" onclick="swTab('pm',2,this)">文件</button>
         <button class="tab" onclick="swTab('pm',3,this)">銀行帳號</button>
       </div>
       <div class="tab-panel pm on" id="pm-basic"></div>
@@ -458,34 +481,17 @@ async function doLogin() {
   hideErr('login-err');
   const btn=document.getElementById('login-btn');
   btn.disabled=true; btn.textContent='登入中…';
-
   let r;
-  try {
-    r = await run('adminLogin', {email, password: pwd});
-  } catch(e) {
-    btn.disabled=false; btn.textContent='登入後台';
-    showErr('login-err','系統錯誤:'+e.message);
-    return;
-  }
-
+  try { r = await run('adminLogin', {email, password: pwd}); } catch(e) { btn.disabled=false; btn.textContent='登入後台'; showErr('login-err','系統錯誤:'+e.message); return; }
   btn.disabled=false; btn.textContent='登入後台';
-
-  if(!r||typeof r.ok==='undefined'){
-    showErr('login-err','系統無回應,請確認 Apps Script 已正確部署(執行身份:以我的身份,存取權:所有人)');
-    return;
-  }
-  if(!r.ok){
-    showErr('login-err','❌ '+r.error);
-    return;
-  }
-  TOKEN=r.token;
-  localStorage.setItem('lemon_admin_token', TOKEN);
+  if(!r||typeof r.ok==='undefined'){showErr('login-err','系統無回應');return;}
+  if(!r.ok){showErr('login-err','❌ '+r.error);return;}
+  TOKEN=r.token; localStorage.setItem('lemon_admin_token', TOKEN);
   document.getElementById('nav-name').textContent=r.name;
   document.getElementById('nav-role').textContent=r.regions||'全地區';
   showPg('pg-main');
   go('accounts',document.getElementById('n-accounts'));
 }
-
 async function doLogout(){await run('logout',{token:TOKEN});TOKEN='';localStorage.removeItem('lemon_admin_token');showPg('pg-login');}
 
 // ════════════════════
@@ -504,10 +510,9 @@ async function loadAccounts(){
     ?'<tr><td colspan="9" style="text-align:center;color:var(--g400);padding:18px">尚無已開通帳號</td></tr>'
     :al.map(r=>`<tr data-name="${r.name}"><td class="nm tbl-link" onclick="openProfile('${r.id}')">${r.name}</td><td style="font-family:monospace;font-size:11px">${r.idNumber}</td><td>${r.phone}</td><td style="font-size:11px">${r.email}</td><td>${r.region}</td><td style="font-size:11px">${r.approvedAt}</td><td style="font-size:11px">${r.lastLogin}</td><td><span class="bdg ${r.status==='啟用中'?'bok':'bg'}">${r.status}</span></td><td class="bg-row"><button class="btn btn-sm" onclick="doResetPwd('${r.id}','${r.name}')">重設密碼</button><button class="btn btn-sm ${r.status==='啟用中'?'btn-r':''}" onclick="doToggle('${r.id}','${r.name}')">${r.status==='啟用中'?'停用':'啟用'}</button></td></tr>`).join('');
 }
-
 async function doApprove(id,name){
-  if(!confirm(`確認審核開通 ${name}?\n開通後系統將立即產出居間承攬契約存至 Google Drive.`))return;
-  toast('處理中,正在產出契約…');
+  if(!confirm(`確認審核開通 ${name}?\n開通後系統將立即產出居間承攬契約存至 Google Drive。`))return;
+  toast('處理中，正在產出契約…');
   const r=await run('approveAccount',{token:TOKEN,pendingId:id});
   if(!r.ok){toast('失敗:'+r.error);return;}
   toast('✓ '+r.message); loadAccounts();
@@ -536,11 +541,24 @@ async function loadNewbies(pg){
   if(!r.ok){toast(r.error);return;}
   const tb=document.getElementById('newbies-tbody');
   tb.innerHTML=r.list.map(s=>{
-    const ct=s.contract==='已簽署'?`<span class="bdg bok">已簽署</span>`:s.contract?`<span class="bdg bw">${s.contract}</span>`:`<span class="bdg bg">—</span>`;
+    // 契約欄：反映上傳+審核狀態
+    let ctHtml;
+    if (!s.contract) {
+      ctHtml = `<span class="bdg bg">未生成</span>`;
+    } else if (s.contractSigned === 'APPROVED') {
+      ctHtml = `<span class="bdg bok">審核通過</span>`;
+    } else if (s.contractSigned) {
+      ctHtml = `<span class="bdg bw">待審核</span>`;
+    } else if (s.contract === '已簽署') {
+      // 舊資料相容
+      ctHtml = `<span class="bdg bok">已簽署</span>`;
+    } else {
+      ctHtml = `<span class="bdg bw">${s.contract}</span>`;
+    }
     const dep=s.deposit?`<span class="bdg ${s.deposit==='已對帳'?'bok':'bw'}">${s.deposit}</span>`:`<span class="bdg bg">—</span>`;
     return `<tr data-name="${s.name}"><td class="nm tbl-link" onclick="openProfile('${s.id}')">${s.name}</td><td>${s.region}</td>
     <td>${s.rules?`<span class="bdg bok" style="font-size:10px">${s.rules.slice(0,10)}</span>`:`<span class="bdg bg">—</span>`}</td>
-    <td>${ct}</td>
+    <td>${ctHtml}</td>
     <td>${s.idFront==='APPROVED'?`<span class="bdg bok">✓</span>`:s.idFront?`<span class="bdg bw">${s.idFront}</span>`:`<span class="bdg bg">—</span>`}</td>
     <td>${s.gc==='APPROVED'?`<span class="bdg bok">✓</span>`:`<span class="bdg bg">${s.gc||'—'}</span>`}</td>
     <td>${s.bank?`<span class="bdg bok">✓</span>`:`<span class="bdg bg">—</span>`}</td>
@@ -549,7 +567,7 @@ async function loadNewbies(pg){
     <td><button class="btn btn-sm btn-p" onclick="openProfile('${s.id}')">查看</button></td></tr>`;
   }).join('')||'<tr><td colspan="10" style="text-align:center;padding:18px;color:var(--g400)">沒有資料</td></tr>';
   const pages=Math.max(1,Math.ceil(r.total/20));
-  document.getElementById('pg-info').textContent=`第 ${_nbPage} 頁 / 共 ${pages} 頁(共 ${r.total} 筆)`;
+  document.getElementById('pg-info').textContent=`第 ${_nbPage} 頁 / 共 ${pages} 頁（共 ${r.total} 筆）`;
   document.getElementById('pg-prev').disabled=_nbPage<=1;
   document.getElementById('pg-next').disabled=_nbPage>=pages;
 }
@@ -562,18 +580,13 @@ async function exportAllStaff() {
   if(!r.ok){toast(r.error);return;}
   let all = [...r.list];
   const totalPages = Math.ceil(r.total/20);
-  for(let p=2;p<=totalPages;p++){
-    const rp = await run('getStaffList',{token:TOKEN,search:'',page:p});
-    if(rp.ok) all = [...all, ...rp.list];
-  }
+  for(let p=2;p<=totalPages;p++){const rp = await run('getStaffList',{token:TOKEN,search:'',page:p});if(rp.ok) all = [...all, ...rp.list];}
   const headers = ['ID','姓名','地區','狀態','規章同意','契約狀態','身份證正面','良民證','銀行','押金'];
   const rows = all.map(s=>[s.id,s.name,s.region,s.status,s.rules?'已同意':'未同意',s.contract||'—',s.idFront||'—',s.gc||'—',s.bank||'—',s.deposit||'—']);
   const csv = [headers,...rows].map(r=>r.map(v=>`"${String(v||'').replace(/"/g,'""')}"`).join(',')).join('\n');
   const blob = new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = '新人總覽_'+new Date().toLocaleDateString('zh-TW')+'.csv';
-  a.click();
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = '新人總覽_'+new Date().toLocaleDateString('zh-TW')+'.csv'; a.click();
   toast('✓ 匯出完成');
 }
 
@@ -593,41 +606,89 @@ async function openProfile(staffId){
   const{staff,rules,contract,allDocs,bank,deposit}=r;
   document.getElementById('pm-title').textContent=staff.name+' · 個人資料';
 
+  // ── 基本資料 tab ──
   document.getElementById('pm-basic').innerHTML=`<div class="card"><div class="card-hd"><div class="card-title">基本資料</div></div>
     ${mkDr('姓名',staff.name)}${mkDr('身份證字號',`<span style="font-family:monospace">${staff.idNumber}</span>`)}
-    ${mkDr('出生年月日',staff.dob||'—')}${mkDr('手機號碼', staff.phone ? (String(staff.phone).startsWith('0') ? staff.phone : '0'+staff.phone) : '—')}
+    ${mkDr('出生年月日',staff.dob||'—')}${mkDr('手機號碼',staff.phone?(String(staff.phone).startsWith('0')?staff.phone:'0'+staff.phone):'—')}
     ${mkDr('電子郵件',staff.email||'—')}${mkDr('聯絡地址',staff.address||'—')}
-    ${mkDr('緊急聯絡人',(staff.emergencyName||'—')+'('+(staff.emergencyRel||'—')+') '+(staff.emergencyPhone ? (String(staff.emergencyPhone).startsWith('0') ? staff.emergencyPhone : '0'+staff.emergencyPhone) : '—'))}
+    ${mkDr('緊急聯絡人',(staff.emergencyName||'—')+'('+(staff.emergencyRel||'—')+') '+(staff.emergencyPhone?(String(staff.emergencyPhone).startsWith('0')?staff.emergencyPhone:'0'+staff.emergencyPhone):'—'))}
     ${mkDr('交通工具',staff.transport||'—')}${mkDr('新冠疫苗',staff.vaccine||'—')}
     ${mkDr('服務地區',staff.region)}${mkDr('帳號狀態',`<span class="bdg ${staff.status==='啟用中'?'bok':'bg'}">${staff.status}</span>`)}</div>`;
 
-  const ctFile=contract&&contract['Drive檔案ID']?`<a href="https://drive.google.com/file/d/${contract['Drive檔案ID']}/view" target="_blank" class="btn btn-sm">⬡ 開啟契約</a>`:'';
+  // ── 規章/契約 tab ──
+  const docs = Array.isArray(allDocs) ? allDocs : [];
+  const ctDoc = docs.find(d => d['文件類型'] === 'CONTRACT_SIGNED');
+  const ctPdfLink = contract&&contract['Drive檔案ID']
+    ? `<a href="https://drive.google.com/file/d/${contract['Drive檔案ID']}/view" target="_blank" class="btn btn-sm">📄 開啟契約 PDF</a>` : '';
+  const ctScanLink = ctDoc&&ctDoc['Drive檔案ID']
+    ? `<a href="https://drive.google.com/file/d/${ctDoc['Drive檔案ID']}/view" target="_blank" class="btn btn-sm btn-b">📋 開啟簽名掃描</a>` : '';
+
+  let ctScanStatus = '';
+  if (ctDoc) {
+    const isApproved = ctDoc['審核狀態'] === 'APPROVED';
+    ctScanStatus = `
+      <div class="card" style="border-color:${isApproved?'#7ECAAA':'#EDBA5A'}">
+        <div class="card-hd">
+          <div class="card-title">已簽名掃描檔</div>
+          <span class="bdg ${isApproved?'bok':'bw'}">${isApproved?'✓ 已審核通過':'待審核'}</span>
+        </div>
+        <div class="bg-row" style="margin-bottom:10px">${ctScanLink}</div>
+        ${isApproved
+          ? mkDr('審核時間', ctDoc['審核時間']||'—') + mkDr('審核人員', ctDoc['審核人員']||'—')
+          : `<div class="bg-row">
+              <button class="btn btn-sm btn-t" onclick="doReviewDocModal('${staff.id}','CONTRACT_SIGNED','APPROVED')">✓ 審核通過</button>
+              <button class="btn btn-sm btn-r" onclick="doReviewDocModal('${staff.id}','CONTRACT_SIGNED','REJECTED')">✕ 退回，請重新上傳</button>
+            </div>`}
+      </div>`;
+  } else if (contract) {
+    ctScanStatus = `<div class="al al-w"><span class="al-icon">⏳</span><div>新人尚未上傳已簽名的契約掃描檔。</div></div>`;
+  }
+
   document.getElementById('pm-contract').innerHTML=`
-    <div class="card"><div class="card-hd"><div class="card-title">規章同意</div></div>
-    ${rules?mkDr('狀態','<span class="bdg bok">✓ 已同意</span>')+mkDr('同意時間',rules['同意時間'])+mkDr('IP位址',rules['IP位址']||'—')+mkDr('版本',rules['規章版本']):'<div style="color:var(--g400);font-size:13px;padding:8px 0"><span class="bdg bw">⏳ 未同意</span></div>'}</div>
-    <div class="card"><div class="card-hd"><div class="card-title">居間承攬契約</div></div>
-    ${contract?mkDr('狀態',`<span class="bdg ${contract['狀態']==='已簽署'?'bok':'bw'}">${contract['狀態']}</span>`)+mkDr('生成時間',contract['生成時間'])+(contract['簽署時間']?mkDr('簽署時間',contract['簽署時間']):'')+(contract['Drive檔案ID']?`<div class="dr"><span class="dl">契約檔案</span><span class="dv">${ctFile}</span></div>`:''):'<div style="color:var(--g400);font-size:13px;padding:8px 0">尚未生成</div>'}</div>`;
+    <div class="card"><div class="card-hd"><div class="card-title">團隊規章</div></div>
+    ${rules
+      ? mkDr('狀態','<span class="bdg bok">✓ 已同意</span>')+mkDr('同意時間',rules['同意時間'])+mkDr('IP位址',rules['IP位址']||'—')+mkDr('版本',rules['規章版本'])
+      : '<div style="color:var(--g400);font-size:13px;padding:8px 0"><span class="bdg bw">⏳ 未同意</span></div>'}</div>
+    <div class="card">
+      <div class="card-hd"><div class="card-title">居間承攬契約</div></div>
+      ${contract
+        ? mkDr('生成時間',contract['生成時間']) +
+          (contract['Drive檔案ID'] ? `<div class="dr"><span class="dl">契約 PDF</span><span class="dv">${ctPdfLink}</span></div>` : '') +
+          mkDr('上傳簽名', ctDoc
+            ? `<span class="bdg ${ctDoc['審核狀態']==='APPROVED'?'bok':'bw'}">${ctDoc['審核狀態']==='APPROVED'?'已審核通過':'待審核'}</span>`
+            : `<span class="bdg bg">未上傳</span>`)
+        : '<div style="color:var(--g400);font-size:13px;padding:8px 0">尚未生成</div>'}
+    </div>
+    ${ctScanStatus}`;
 
-  const docLabel={ID_FRONT:'身份證正面',ID_BACK:'身份證反面',GOOD_CONDUCT:'良民證'};
-  const docs=Array.isArray(allDocs)?allDocs:[];
-  document.getElementById('pm-docs').innerHTML=docs.length===0
-    ?'<div style="color:var(--g400);padding:8px 0;font-size:13px">尚無文件上傳記錄</div>'
-    :docs.map(d=>`<div class="card">
-      <div class="card-hd"><div class="card-title">${docLabel[d['文件類型']]||d['文件類型']}</div><span class="bdg ${d['審核狀態']==='APPROVED'?'bok':'bw'}">${d['審核狀態']==='APPROVED'?'已審核':'待審核'}</span></div>
-      <div class="id-bar">
-        <div class="id-bar-item"><div class="ib-label">中文姓名</div><div class="ib-value">${staff.name}</div></div>
-        <div class="id-bar-item"><div class="ib-label">身份證字號</div><div class="ib-value" style="font-family:monospace">${staff.idNumber}</div></div>
-        <div class="id-bar-item"><div class="ib-label">出生年月日</div><div class="ib-value">${staff.dob||'—'}</div></div>
-      </div>
-      <div style="font-size:11px;color:var(--blue-dk);margin-bottom:8px">ℹ 請核對上方建檔資料與所上傳的文件是否一致</div>
-      ${d['Drive檔案ID']?`<a href="https://drive.google.com/file/d/${d['Drive檔案ID']}/view" target="_blank" class="btn btn-sm btn-b" style="margin-bottom:10px">⬡ 開啟文件</a>`:'<div class="img-ph" style="margin-bottom:10px">尚未上傳</div>'}
-      <div class="bg-row">
-        <button class="btn btn-sm btn-t" onclick="doReviewDoc('${staff.id}','${d['文件類型']}','APPROVED')">✓ 審核通過</button>
-        <button class="btn btn-sm btn-r" onclick="doReviewDoc('${staff.id}','${d['文件類型']}','REJECTED')">✕ 退回</button>
-        ${d['文件類型']==='GOOD_CONDUCT'?`<button class="btn btn-sm" onclick="doConfirmGc('${staff.id}')">✓ 確認收到正本</button>`:''}
-      </div></div>`).join('');
+  // ── 文件 tab（身份證 + 良民證，CONTRACT_SIGNED 不在此顯示）──
+  const idDocs = docs.filter(d => ['ID_FRONT','ID_BACK','GOOD_CONDUCT'].includes(d['文件類型']));
+  const docLabel = {ID_FRONT:'身份證正面', ID_BACK:'身份證反面', GOOD_CONDUCT:'良民證'};
 
-  // ✅ BUG 1 修正：移除結尾多餘的反引號
+  document.getElementById('pm-docs').innerHTML = idDocs.length === 0
+    ? '<div style="color:var(--g400);padding:8px 0;font-size:13px">尚無身份證/良民證上傳記錄</div>'
+    : idDocs.map(d => {
+        const isApproved = d['審核狀態'] === 'APPROVED';
+        return `<div class="card">
+          <div class="card-hd">
+            <div class="card-title">${docLabel[d['文件類型']]||d['文件類型']}</div>
+            <span class="bdg ${isApproved?'bok':'bw'}">${isApproved?'已審核':'待審核'}</span>
+          </div>
+          <div class="id-bar">
+            <div class="id-bar-item"><div class="ib-label">中文姓名</div><div class="ib-value">${staff.name}</div></div>
+            <div class="id-bar-item"><div class="ib-label">身份證字號</div><div class="ib-value" style="font-family:monospace">${staff.idNumber}</div></div>
+            <div class="id-bar-item"><div class="ib-label">出生年月日</div><div class="ib-value">${staff.dob||'—'}</div></div>
+          </div>
+          <div style="font-size:11px;color:var(--blue-dk);margin-bottom:8px">ℹ 請核對上方建檔資料與所上傳文件是否一致</div>
+          ${d['Drive檔案ID']?`<a href="https://drive.google.com/file/d/${d['Drive檔案ID']}/view" target="_blank" class="btn btn-sm btn-b" style="margin-bottom:10px">⬡ 開啟文件</a>`:'<div class="img-ph" style="margin-bottom:10px">尚未上傳</div>'}
+          <div class="bg-row">
+            <button class="btn btn-sm btn-t" onclick="doReviewDocModal('${staff.id}','${d['文件類型']}','APPROVED')">✓ 審核通過</button>
+            <button class="btn btn-sm btn-r" onclick="doReviewDocModal('${staff.id}','${d['文件類型']}','REJECTED')">✕ 退回</button>
+            ${d['文件類型']==='GOOD_CONDUCT'?`<button class="btn btn-sm" onclick="doConfirmGc('${staff.id}')">✓ 確認收到正本</button>`:''}
+          </div></div>`;
+      }).join('');
+
+  // ── 銀行/押金 tab ──
   document.getElementById('pm-bank').innerHTML=`
     <div class="card"><div class="card-hd"><div class="card-title">銀行帳號</div></div>
     ${bank?mkDr('戶名',bank['持有人'])+mkDr('銀行名稱',bank['銀行名稱'])+mkDr('銀行帳號',`<span id="bk-el" style="font-family:monospace">${bank['銀行帳號']}</span><button class="copy-btn" onclick="copyEl('bk-el')" style="margin-left:6px">複製</button>`):'<div style="color:var(--g400);font-size:13px;padding:8px 0">尚未設定</div>'}</div>
@@ -639,11 +700,12 @@ async function openProfile(staffId){
       :'<div style="color:var(--g400);font-size:13px;padding:8px 0">尚無押金記錄</div>'}</div>`;
 }
 
-async function doReviewDoc(staffId,docType,status){
-  const note=status==='REJECTED'?(prompt('退回原因:')||''):'';
-  const r=await run('reviewDoc',{token:TOKEN,staffId,docType,status,note});
+// Modal 內審核（包含 CONTRACT_SIGNED）
+async function doReviewDocModal(staffId, docType, status) {
+  const note = status === 'REJECTED' ? (prompt('退回原因（新人將看到此說明）:') || '') : '';
+  const r = await run('reviewDoc', {token:TOKEN, staffId, docType, status, note});
   if(!r.ok){toast(r.error);return;}
-  toast(status==='APPROVED'?'✓ 審核通過':'已退回');
+  toast(status==='APPROVED' ? '✓ 審核通過' : '已退回，新人須重新上傳');
   openProfile(staffId);
 }
 async function doConfirmGc(staffId){
@@ -658,35 +720,100 @@ async function doExportHtml(){
   toast('✓ 已存至 Drive'); window.open(r.fileUrl,'_blank');
 }
 
-// ════════════════════
-//  證件審核頁
-// ════════════════════
+// ════════════════════════════════════════════════════
+//  文件審核頁（CONTRACT_SIGNED + 身份證/良民證 分開）
+// ════════════════════════════════════════════════════
 async function loadDocs(){
-  const r=await run('getDocList',{token:TOKEN});
+  document.getElementById('contracts-list').innerHTML = '<div class="loading"><div class="spinner"></div>載入中…</div>';
+  document.getElementById('docs-list').innerHTML = '<div class="loading"><div class="spinner"></div>載入中…</div>';
+
+  const r = await run('getDocList', {token:TOKEN});
   if(!r.ok){toast(r.error);return;}
-  const list=r.list||[];
-  document.getElementById('nb-docs').textContent=list.length;
-  const docLabel={ID_FRONT:'身份證正面',ID_BACK:'身份證反面',GOOD_CONDUCT:'良民證'};
-  // ✅ BUG 2 修正：ternary 的 false 分支改用反引號（原本用單引號導致 template literal 斷裂）
-  document.getElementById('docs-list').innerHTML=list.length===0
-    ?'<div class="al al-ok"><span class="al-icon">✓</span><div>目前無待審核文件</div></div>'
-    :list.map(d=>`<div class="card">
-      <div class="card-hd"><div class="card-title">${d['姓名']} · ${docLabel[d['文件類型']]||d['文件類型']}</div><span class="bdg bw">待審</span></div>
-      <div class="id-bar">
-        <div class="id-bar-item"><div class="ib-label">中文姓名</div><div class="ib-value">${d['姓名']}</div></div>
-        <div class="id-bar-item"><div class="ib-label">身份證字號</div><div class="ib-value" style="font-family:monospace">${d.staffIdNumber||'—'}</div></div>
-        <div class="id-bar-item"><div class="ib-label">出生年月日</div><div class="ib-value">${d.staffDob||'—'}</div></div>
-      </div>
-      <div style="font-size:11px;color:var(--blue-dk);margin-bottom:10px">ℹ 請核對上方建檔資料與所上傳的文件是否一致</div>
-      ${d.fileUrl?`<a href="${d.fileUrl}" target="_blank" class="btn btn-sm btn-b" style="margin-bottom:10px">⬡ 開啟文件</a>`:`<div class="img-ph">尚未上傳</div>`}
-      <div class="bg-row" style="margin-top:10px">
-        <button class="btn btn-sm btn-t" onclick="reviewDocList('${d['人員ID']}','${d['文件類型']}','APPROVED')">✓ 審核通過</button>
-        <button class="btn btn-sm btn-r" onclick="reviewDocList('${d['人員ID']}','${d['文件類型']}','REJECTED')">✕ 退回</button>
-        ${d['文件類型']==='GOOD_CONDUCT'?`<button class="btn btn-sm" onclick="confirmGcList('${d['人員ID']}')">✓ 確認收到正本</button>`:''}
-      </div></div>`).join('');
+  const list = r.list || [];
+
+  // 分兩類
+  const ctList  = list.filter(d => d['文件類型'] === 'CONTRACT_SIGNED');
+  const idList  = list.filter(d => ['ID_FRONT','ID_BACK','GOOD_CONDUCT'].includes(d['文件類型']));
+
+  // 更新 sidebar badge：總待審核數
+  const total = list.length;
+  document.getElementById('nb-docs').textContent = total;
+
+  // ── 契約簽名區 ──
+  const ctBadge = document.getElementById('ct-pending-badge');
+  if (ctList.length > 0) {
+    ctBadge.style.display = 'inline-flex';
+    ctBadge.textContent = `${ctList.length} 件待審`;
+  } else {
+    ctBadge.style.display = 'none';
+  }
+
+  document.getElementById('contracts-list').innerHTML = ctList.length === 0
+    ? '<div class="al al-ok"><span class="al-icon">✓</span><div>目前無待審核的契約掃描檔</div></div>'
+    : ctList.map(d => `
+        <div class="card" style="border-left:4px solid var(--coral)">
+          <div class="card-hd">
+            <div>
+              <div class="card-title" style="color:var(--coral-dk)">${d['姓名']} · 居間承攬契約（已簽名掃描）</div>
+              <div style="font-size:11px;color:var(--g400);margin-top:3px">上傳時間：${d['上傳時間']||'—'}</div>
+            </div>
+            <span class="bdg bc">待審核</span>
+          </div>
+          ${d.fileUrl
+            ? `<a href="${d.fileUrl}" target="_blank" class="btn btn-sm btn-b" style="margin-bottom:12px">📋 開啟簽名掃描檔</a>`
+            : '<div class="img-ph" style="margin-bottom:10px">無檔案連結</div>'}
+          <div class="al al-i" style="margin-bottom:10px"><span class="al-icon">ℹ</span><div>請確認簽名欄位完整、字跡清晰，且與建檔姓名（<strong>${d['姓名']}</strong>）一致。</div></div>
+          <div class="bg-row">
+            <button class="btn btn-sm btn-t" onclick="reviewDocList('${d['人員ID']}','CONTRACT_SIGNED','APPROVED')">✓ 審核通過</button>
+            <button class="btn btn-sm btn-r" onclick="reviewDocList('${d['人員ID']}','CONTRACT_SIGNED','REJECTED')">✕ 退回，請重新上傳</button>
+          </div>
+        </div>`).join('');
+
+  // ── 身份證 / 良民證區 ──
+  const idBadge = document.getElementById('id-pending-badge');
+  if (idList.length > 0) {
+    idBadge.style.display = 'inline-flex';
+    idBadge.textContent = `${idList.length} 件待審`;
+  } else {
+    idBadge.style.display = 'none';
+  }
+
+  const docLabel = {ID_FRONT:'身份證正面', ID_BACK:'身份證反面', GOOD_CONDUCT:'良民證'};
+  document.getElementById('docs-list').innerHTML = idList.length === 0
+    ? '<div class="al al-ok"><span class="al-icon">✓</span><div>目前無待審核的身份證/良民證</div></div>'
+    : idList.map(d => `
+        <div class="card">
+          <div class="card-hd">
+            <div class="card-title">${d['姓名']} · ${docLabel[d['文件類型']]||d['文件類型']}</div>
+            <span class="bdg bw">待審核</span>
+          </div>
+          <div class="id-bar">
+            <div class="id-bar-item"><div class="ib-label">中文姓名</div><div class="ib-value">${d['姓名']}</div></div>
+            <div class="id-bar-item"><div class="ib-label">身份證字號</div><div class="ib-value" style="font-family:monospace">${d.staffIdNumber||'—'}</div></div>
+            <div class="id-bar-item"><div class="ib-label">出生年月日</div><div class="ib-value">${d.staffDob||'—'}</div></div>
+          </div>
+          <div style="font-size:11px;color:var(--blue-dk);margin-bottom:10px">ℹ 請核對上方建檔資料與所上傳文件是否一致</div>
+          ${d.fileUrl?`<a href="${d.fileUrl}" target="_blank" class="btn btn-sm btn-b" style="margin-bottom:10px">⬡ 開啟文件</a>`:'<div class="img-ph">尚未上傳</div>'}
+          <div class="bg-row" style="margin-top:10px">
+            <button class="btn btn-sm btn-t" onclick="reviewDocList('${d['人員ID']}','${d['文件類型']}','APPROVED')">✓ 審核通過</button>
+            <button class="btn btn-sm btn-r" onclick="reviewDocList('${d['人員ID']}','${d['文件類型']}','REJECTED')">✕ 退回</button>
+            ${d['文件類型']==='GOOD_CONDUCT'?`<button class="btn btn-sm" onclick="confirmGcList('${d['人員ID']}')">✓ 確認收到正本</button>`:''}
+          </div>
+        </div>`).join('');
 }
-async function reviewDocList(sid,t,s){const note=s==='REJECTED'?(prompt('退回原因:')||''):'';const r=await run('reviewDoc',{token:TOKEN,staffId:sid,docType:t,status:s,note});if(!r.ok){toast(r.error);return;}toast(s==='APPROVED'?'✓ 審核通過':'已退回');loadDocs();}
-async function confirmGcList(sid){const r=await run('confirmGoodConduct',{token:TOKEN,staffId:sid});if(!r.ok){toast(r.error);return;}toast('✓ 確認收到正本');loadDocs();}
+
+async function reviewDocList(sid, t, s){
+  const note = s==='REJECTED' ? (prompt('退回原因:') || '') : '';
+  const r = await run('reviewDoc',{token:TOKEN,staffId:sid,docType:t,status:s,note});
+  if(!r.ok){toast(r.error);return;}
+  toast(s==='APPROVED'?'✓ 審核通過':'已退回');
+  loadDocs();
+}
+async function confirmGcList(sid){
+  const r=await run('confirmGoodConduct',{token:TOKEN,staffId:sid});
+  if(!r.ok){toast(r.error);return;}
+  toast('✓ 確認收到正本'); loadDocs();
+}
 
 // ════════════════════
 //  銀行帳號管理
@@ -710,7 +837,7 @@ async function loadDeposit(){
   const list=r.list||[];
   document.getElementById('nb-dep').textContent=list.filter(d=>d['對帳狀態']==='待對帳').length;
   const tb=document.getElementById('dep-tbody');
-  tb.innerHTML=list.map((d,i)=>{const done=d['對帳狀態']==='已對帳';return `<tr class="dep-row" data-name="${d['姓名']}"><td><input type="checkbox" class="dep-cb" data-id="${d['人員ID']}" style="accent-color:var(--coral)" ${done?'disabled':''}></td><td class="nm">${d['姓名']}</td><td>${d['匯款日期']}</td><td>${d['匯款時間']||'—'}</td><td style="font-family:monospace">${d['帳號後5碼']}</td><td>$${d['匯款金額']}</td><td><span class="bdg ${done?'bok':'bw'}">${d['對帳狀態']}</span></td><td style="font-size:11px">${d['對帳時間']||'—'}</td><td>${done?'<span style="font-size:11px;color:var(--g400)">完成</span>':`<button class="btn btn-sm btn-t" onclick="singleDep('${d['人員ID']}')">✓</button>`}</td></tr>`;}).join('')||'<tr><td colspan="9" style="text-align:center;padding:18px;color:var(--g400)">無押金記錄</td></tr>';
+  tb.innerHTML=list.map((d)=>{const done=d['對帳狀態']==='已對帳';return `<tr class="dep-row" data-name="${d['姓名']}"><td><input type="checkbox" class="dep-cb" data-id="${d['人員ID']}" style="accent-color:var(--coral)" ${done?'disabled':''}></td><td class="nm">${d['姓名']}</td><td>${d['匯款日期']}</td><td>${d['匯款時間']||'—'}</td><td style="font-family:monospace">${d['帳號後5碼']}</td><td>$${d['匯款金額']}</td><td><span class="bdg ${done?'bok':'bw'}">${d['對帳狀態']}</span></td><td style="font-size:11px">${d['對帳時間']||'—'}</td><td>${done?'<span style="font-size:11px;color:var(--g400)">完成</span>':`<button class="btn btn-sm btn-t" onclick="singleDep('${d['人員ID']}')">✓</button>`}</td></tr>`;}).join('')||'<tr><td colspan="9" style="text-align:center;padding:18px;color:var(--g400)">無押金記錄</td></tr>';
 }
 async function singleDep(sid){const r=await run('confirmDeposit',{token:TOKEN,staffIdsJson:JSON.stringify([sid])});if(!r.ok){toast(r.error);return;}toast('✓ 確認完成');loadDeposit();}
 async function batchConfirmDeposit(){
@@ -732,9 +859,9 @@ async function loadRefund(){
 async function batchCompleteRefund(){
   const ids=[...document.querySelectorAll('.ref-cb:checked')].map(c=>c.dataset.id);
   if(!ids.length){toast('請先勾選項目');return;}
-  if(!confirm(`確認退款完成 ${ids.length} 筆?\n退款後帳號將自動停用.`))return;
+  if(!confirm(`確認退款完成 ${ids.length} 筆?\n退款後帳號將自動停用。`))return;
   const r=await run('completeRefund',{token:TOKEN,staffIdsJson:JSON.stringify(ids)});
-  if(!r.ok){toast(r.error);return;}toast(`✓ 退款完成 ${ids.length} 筆,帳號已停用`);document.getElementById('ref-all').checked=false;loadRefund();
+  if(!r.ok){toast(r.error);return;}toast(`✓ 退款完成 ${ids.length} 筆，帳號已停用`);document.getElementById('ref-all').checked=false;loadRefund();
 }
 
 // ════════════════════
@@ -753,7 +880,7 @@ async function doCreateAdmin(){
   const pwd=document.getElementById('adm-pwd').value;
   const role=document.getElementById('adm-role').value;
   const regions=document.getElementById('adm-regions').value;
-  if(!name||!email||!pwd){toast('請填寫姓名,Email 和密碼');return;}
+  if(!name||!email||!pwd){toast('請填寫姓名，Email 和密碼');return;}
   const r=await run('createAdmin',{token:TOKEN,name,email,password:pwd,role,regions});
   if(!r.ok){toast(r.error);return;}
   toast('✓ 管理員帳號已建立');
@@ -762,7 +889,7 @@ async function doCreateAdmin(){
   loadAdmins();
 }
 async function doResetAdminPwd(id,name){
-  const pwd=prompt(`重設 ${name} 的密碼\n請輸入新密碼(至少 6 碼):`);
+  const pwd=prompt(`重設 ${name} 的密碼\n請輸入新密碼（至少 6 碼）:`);
   if(!pwd)return;
   if(pwd.length<6){toast('密碼至少 6 個字元');return;}
   const r=await run('resetAdminPassword',{token:TOKEN,adminId:id,newPassword:pwd});
@@ -786,21 +913,17 @@ async function loadRegions(){
     <div style="font-size:11px;font-weight:700;color:var(--g400);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Google Drive / Sheets</div>
     ${rg['Drive新訓建檔']?mkDr('新訓建檔資料夾',`<a href="https://drive.google.com/drive/folders/${rg['Drive新訓建檔']}" target="_blank" style="font-size:11px">開啟 ↗</a>`):''}
     ${rg['Sheets發信工作表']?mkDr('發信工作表',`<a href="https://docs.google.com/spreadsheets/d/${rg['Sheets發信工作表']}" target="_blank" style="font-size:11px">開啟 ↗</a>`):''}
-  </div>`).join('')+`<div class="card" style="border-style:dashed;text-align:center;color:var(--g400);padding:24px;cursor:pointer" onclick="addRegion()"><div style="font-size:20px;margin-bottom:6px">+</div><div>新增地區(台中,高雄…)</div></div>`;
+  </div>`).join('')+`<div class="card" style="border-style:dashed;text-align:center;color:var(--g400);padding:24px;cursor:pointer" onclick="addRegion()"><div style="font-size:20px;margin-bottom:6px">+</div><div>新增地區（台中、高雄…）</div></div>`;
 }
 function editRegion(name) {
   run('getRegions',{token:TOKEN}).then(r=>{
     if(!r.ok){toast(r.error);return;}
     const rg = r.regions.find(x=>x['地區']===name)||{};
     const fields = [
-      ['公司名稱','公司名稱',rg['公司名稱']||''],
-      ['統一編號','統一編號',rg['統一編號']||''],
-      ['公司地址','公司地址',rg['公司地址']||''],
-      ['公司電話','公司電話',rg['公司電話']||''],
-      ['負責人','負責人',rg['負責人']||''],
-      ['押金銀行','銀行名稱',rg['押金銀行']||''],
-      ['押金帳號','銀行帳號',rg['押金帳號']||''],
-      ['Drive新訓建檔','Drive 資料夾 ID',rg['Drive新訓建檔']||''],
+      ['公司名稱','公司名稱',rg['公司名稱']||''],['統一編號','統一編號',rg['統一編號']||''],
+      ['公司地址','公司地址',rg['公司地址']||''],['公司電話','公司電話',rg['公司電話']||''],
+      ['負責人','負責人',rg['負責人']||''],['押金銀行','銀行名稱',rg['押金銀行']||''],
+      ['押金帳號','銀行帳號',rg['押金帳號']||''],['Drive新訓建檔','Drive 資料夾 ID',rg['Drive新訓建檔']||''],
     ];
     const modal = document.createElement('div');
     modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:300;display:flex;align-items:center;justify-content:center;padding:24px';
@@ -814,24 +937,21 @@ function editRegion(name) {
       <button onclick="this.closest('[style*=fixed]').remove()" style="padding:7px 14px;border-radius:6px;border:1px solid #ddd;background:#fff;cursor:pointer">取消</button>
       <button id="save-region-btn" style="padding:7px 14px;border-radius:6px;background:#D85A30;color:#fff;border:none;cursor:pointer">儲存</button>
     </div>`;
-    modal.appendChild(box);
-    document.body.appendChild(modal);
+    modal.appendChild(box); document.body.appendChild(modal);
     box.querySelector('#save-region-btn').onclick = () => {
       const obj = {'地區': name};
       box.querySelectorAll('input[data-key]').forEach(inp => { obj[inp.dataset.key] = inp.value.trim(); });
       run('saveRegion',{token:TOKEN, region: obj}).then(res=>{
         if(!res.ok){toast(res.error);return;}
-        toast('✓ 地區資料已更新');
-        modal.remove();
-        loadRegions();
+        toast('✓ 地區資料已更新'); modal.remove(); loadRegions();
       });
     };
   });
 }
 function addRegion(){
-  var name=prompt("新地區名稱(如:台中)");if(!name)return;
+  var name=prompt("新地區名稱（如：台中）");if(!name)return;
   var obj={"地區":name,"公司名稱":"檸檬專業清潔有限公司","統一編號":"42627791","公司地址":"","公司電話":"02-27002386","負責人":"謝曜聲","押金銀行":"富邦銀行(012)","押金帳號":"","Drive新訓建檔":"","Drive新訓退訓":"","Drive線上專員":"","Sheets發信工作表":"","負責管理員Email":""};
-  run("saveRegion",{token:TOKEN,region:obj}).then(function(r){if(!r.ok)toast(r.error);else{toast("地區已新增,請至地區設定填入 Drive/Sheets ID");loadRegions();}});
+  run("saveRegion",{token:TOKEN,region:obj}).then(function(r){if(!r.ok)toast(r.error);else{toast("地區已新增，請至地區設定填入 Drive/Sheets ID");loadRegions();}});
 }
 
 // ════════════════════
@@ -850,19 +970,14 @@ function toast(msg){const el=document.getElementById('toast');el.textContent=msg
 // ── 診斷工具 ──
 function runDiag() {
   const out = document.getElementById('diag-result');
-  out.innerHTML = '<div style="color:var(--blue-dk)">⏳ 測試中(最多 15 秒)…</div>';
-  const timer = setTimeout(() => {
-    out.innerHTML = '<div style="color:var(--red);background:var(--red-lt);padding:10px;border-radius:6px;line-height:1.7">❌ <strong>逾時(15秒無回應)</strong></div>';
-  }, 15000);
+  out.innerHTML = '<div style="color:var(--blue-dk)">⏳ 測試中（最多 15 秒）…</div>';
+  const timer = setTimeout(() => { out.innerHTML = '<div style="color:var(--red);background:var(--red-lt);padding:10px;border-radius:6px">❌ 逾時（15秒無回應）</div>'; }, 15000);
   fetch(API_URL + '/api/get-region-names', {method:'POST',headers:{'Content-Type':'application/json'},body:'{}'}).then(r=>r.json()).then(r=>{
     clearTimeout(timer);
     out.innerHTML = r.ok
-      ? '<div style="color:var(--teal-dk);background:var(--teal-lt);padding:10px;border-radius:6px">✅ <strong>連線正常!</strong></div>'
-      : '<div style="color:var(--red);background:var(--red-lt);padding:10px;border-radius:6px">⚠ 連線成功但 API 回傳錯誤: '+r.error+'</div>';
-  }).catch(err=>{
-    clearTimeout(timer);
-    out.innerHTML = '<div style="color:var(--red);background:var(--red-lt);padding:10px;border-radius:6px">❌ fetch 失敗:'+err.message+'</div>';
-  });
+      ? '<div style="color:var(--teal-dk);background:var(--teal-lt);padding:10px;border-radius:6px">✅ 連線正常！</div>'
+      : '<div style="color:var(--red);background:var(--red-lt);padding:10px;border-radius:6px">⚠ 連線成功但 API 回傳錯誤：'+r.error+'</div>';
+  }).catch(err=>{ clearTimeout(timer); out.innerHTML = '<div style="color:var(--red);background:var(--red-lt);padding:10px;border-radius:6px">❌ fetch 失敗：'+err.message+'</div>'; });
 }
 </script>
 </body>
