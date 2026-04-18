@@ -1013,43 +1013,28 @@ async function handleFileUpload() {
     return;
   }
 
-  // 立即更新 UI 為「上傳中」
   setUploadingUI(_uploadType);
   toast('上傳中，請稍候…');
 
   try {
     const b64 = await fileToB64(file);
 
-    const payload = {
-      token: TOKEN,
-      staffName: PROFILE.staff.name,
-      docType: _uploadType,
+    // 直接走 Worker /api/upload-doc（同時寫入 Drive + Sheets）
+    const r = await run('uploadDoc', {
+      token:    TOKEN,
+      docType:  _uploadType,
       fileName: file.name,
       mimeType: file.type,
-      fileData: b64
-    };
-
-    const url = 'https://script.google.com/macros/s/AKfycbxwQ5zFxoFIGdI9BMV4xJwigXe216HyiTOTZwVrLsRNh-UmBjHytuOkt8RK_X6nnLIQ/exec';
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify(payload),
-      redirect: 'follow'
+      fileData: b64,
     });
 
-    const text = await res.text();
-    const r = JSON.parse(text);
     if (!r.ok) throw new Error(r.error || '未知錯誤');
 
     // 更新本地 PROFILE
     applyUploadedDocToProfile(_uploadType, r);
 
-    // 重新渲染對應頁面
-    if (_uploadType === 'CONTRACT_SIGNED') {
-      renderContract();
-    } else {
-      renderDocs();
-    }
+    if (_uploadType === 'CONTRACT_SIGNED') renderContract();
+    else renderDocs();
     renderOverview();
     toast('✓ 上傳成功！等待管理員審核');
     input.value = '';
@@ -1057,7 +1042,6 @@ async function handleFileUpload() {
     console.error('UPLOAD ERROR', e);
     toast('上傳失敗：' + (e && e.message ? e.message : e));
     input.value = '';
-    // 還原畫面
     if (_uploadType === 'CONTRACT_SIGNED') renderContract();
     else renderDocs();
   }
