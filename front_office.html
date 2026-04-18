@@ -368,22 +368,15 @@ button,input,select,textarea{font-family:var(--font);}button{cursor:pointer;}
         </div>
       </div>
 
-      <!-- ═══════════════════════════════════════════════════════════
-           居間承攬契約  (PDF 下載 → 親筆簽名 → 掃描上傳)
-           ═══════════════════════════════════════════════════════════ -->
+      <!-- ════════════════════════════════════
+           居間承攬契約（線上閱讀同意）
+           ════════════════════════════════════ -->
       <div id="p-contract" class="fp" style="display:none">
         <div class="topbar"><div><div class="ph">居間承攬契約</div></div></div>
 
         <!-- 已完成 -->
         <div class="al al-ok" id="ct-ok" style="display:none">
           <span class="al-icon">✓</span><div id="ct-ok-msg"></div>
-        </div>
-
-        <!-- 流程步驟條 -->
-        <div class="ct-steps" id="ct-steps-bar" style="display:none">
-          <div class="ct-step" id="ct-s1"><span class="ct-step-num">①</span>下載契約</div>
-          <div class="ct-step" id="ct-s2"><span class="ct-step-num">②</span>親筆簽名</div>
-          <div class="ct-step" id="ct-s3"><span class="ct-step-num">③</span>掃描上傳</div>
         </div>
 
         <!-- 尚未生成 -->
@@ -398,54 +391,36 @@ button,input,select,textarea{font-family:var(--font);}button{cursor:pointer;}
           <div id="ct-info-rows"></div>
         </div>
 
-        <!-- STEP 1：下載契約 PDF -->
-        <div class="card" id="ct-download-card" style="display:none">
-          <div class="card-hd"><div class="card-title">步驟 1 · 下載契約</div></div>
-          <div class="al al-i">
-            <span class="al-icon">📄</span>
-            <div>管理員已為您產生專屬契約，請點下方按鈕下載 PDF，列印後親筆簽名。</div>
-          </div>
-          <div class="pdf-prev" id="ct-pdf-row" style="display:none">
-            <div class="pdf-icon">PDF</div>
-            <div style="flex:1">
-              <div id="ct-pdf-name" style="font-size:12px;font-weight:600;color:var(--g800)"></div>
-              <div style="font-size:11px;color:var(--g400)">點選右方按鈕下載或開啟</div>
-            </div>
-            <a id="ct-pdf-link" class="btn btn-p btn-sm" target="_blank">⬇ 下載契約</a>
-          </div>
-          <div style="margin-top:12px;font-size:12px;color:var(--g500);line-height:1.8;">
-            <strong>注意事項：</strong><br>
-            · 請列印後，在乙方欄位以藍筆或黑筆親筆簽名、蓋章（或按指印）。<br>
-            · 簽完後以手機拍照或掃描，存成 JPG 或 PDF 檔案。<br>
-            · 再回到本頁步驟 3 上傳已簽名的契約掃描檔。
-          </div>
-        </div>
-
-        <!-- STEP 2：說明（靜態提示） -->
-        <div class="card" id="ct-sign-hint-card" style="display:none">
-          <div class="card-hd"><div class="card-title">步驟 2 · 親筆簽名</div></div>
-          <div style="font-size:13px;color:var(--g600);line-height:2;">
-            請在下載的契約 PDF 上，於乙方欄位：<br>
-            <span style="display:inline-block;background:var(--amber-lt);color:var(--amber);padding:2px 8px;border-radius:4px;font-weight:600;margin:4px 0;">簽名 ／ 蓋章 ／ 按指印（擇一）</span><br>
-            完成後請拍照或掃描，再進行步驟 3 上傳。
-          </div>
-        </div>
-
-        <!-- STEP 3：上傳已簽名契約 -->
-        <div class="card" id="ct-upload-card" style="display:none">
-          <div class="card-hd">
-            <div class="card-title">步驟 3 · 上傳已簽名契約</div>
-            <span id="ct-upload-badge" class="bdg bw">待上傳</span>
-          </div>
-          <div class="al al-i">
-            <span class="al-icon">ℹ</span>
-            <div>請上傳已親筆簽名的契約掃描檔（JPG / PNG / PDF，10MB 以內）。</div>
-          </div>
-          <div id="ct-upload-area">
-            <div class="upload-zone" onclick="triggerUpload('CONTRACT_SIGNED')">
-              📎 點此選擇已簽名契約掃描檔
+        <!-- 契約全文 + 同意按鈕 -->
+        <div class="card" id="ct-content" style="display:none">
+          <div class="card-hd"><div class="card-title">居間承攬契約全文</div></div>
+          <div class="contract-body">
+            <div class="contract-art"><div class="contract-art-t">第一條 合約期間</div><div class="contract-art-b"><p>1. 中華民國 115 年 4 月 1 日至 116 年 3 月 31 日止，共計一年。</p><p>2. 期滿後以相同條件自動展延一年；任一方欲終止應於前一個月告知他方。</p></div></div>
+            <div class="contract-art"><div class="contract-art-t">第二條 媒合方式說明</div><div class="contract-art-b"><p>1. 乙方同意每月前 3 個日曆天提供下月可媒合之勞務時段。</p><p>2. 媒合成立時乙方與甲方客戶之間成立承攬契約；乙方得自行決定是否承接，甲方不得干涉。</p></div></div>
+            <div class="contract-art"><div class="contract-art-t">第三條 勞務報酬計算與給付</div><div class="contract-art-b"><p>乙方同意甲方自總費用中抽取 35–50% 媒合費用；甲方每月 10 日及 20 日分別結算代收勞務款，遇例假日順延。</p></div></div>
+            <div class="contract-art"><div class="contract-art-t">第四條 承攬服務要求</div><div class="contract-art-b"><p>乙方不得故意或過失損壞或偷竊甲方客戶物品；偷竊者甲方得解除本約並請求損害賠償。</p></div></div>
+            <div class="contract-art"><div class="contract-art-t">第五條至第八條</div><div class="contract-art-b"><p>無法履行程序、保密條款、管轄法院（台灣台北地方法院），附則悉依民法承攬章節辦理。</p></div></div>
+            <div class="sig-block">
+              <div>
+                <div style="font-weight:700;margin-bottom:4px">甲方：檸檬專業清潔有限公司</div>
+                <div>負責人：謝曜聲　統一編號：42627791</div>
+                <div style="margin-top:6px"><svg width="52" height="52" viewBox="0 0 80 80"><circle cx="40" cy="40" r="38" fill="none" stroke="#C0392B" stroke-width="2.5"/><circle cx="40" cy="40" r="30" fill="none" stroke="#C0392B" stroke-width="1.2"/><text x="40" y="26" font-size="7" fill="#C0392B" text-anchor="middle" font-weight="700">檸檬專業清潔</text><text x="40" y="37" font-size="7" fill="#C0392B" text-anchor="middle" font-weight="700">有限公司</text><text x="40" y="50" font-size="8.5" fill="#C0392B" text-anchor="middle" font-weight="700">謝曜聲</text></svg></div>
+              </div>
+              <div class="sig-party-b">
+                <div style="font-weight:700;margin-bottom:6px">乙方（您的資料）</div>
+                <div id="ct-pb-name"></div>
+                <div id="ct-pb-id"></div>
+                <div id="ct-pb-addr"></div>
+                <div id="ct-pb-phone"></div>
+                <div style="font-size:11px;color:var(--g400);margin-top:6px;padding-top:6px;border-top:1px dashed var(--g200)">點選同意後系統自動記錄時間</div>
+              </div>
             </div>
           </div>
+          <div style="display:flex;align-items:center;gap:10px;font-size:13px;font-weight:500;margin-top:4px">
+            <input type="checkbox" id="ct-cb" style="width:16px;height:16px;accent-color:var(--coral);">
+            <label for="ct-cb">我已詳閱全文並同意簽署本居間承攬契約</label>
+          </div>
+          <button class="btn btn-p" style="margin-top:12px;width:100%" onclick="doSignContract()">確認同意並簽署</button>
         </div>
 
       </div><!-- /p-contract -->
@@ -882,117 +857,54 @@ async function doAgreeRules() {
 }
 
 // ════════════════════════════════════════════════════
-//  居間承攬契約  (PDF 下載 → 親筆簽名 → 掃描上傳)
+//  居間承攬契約（線上閱讀同意）
 // ════════════════════════════════════════════════════
 function renderContract() {
   if (!PROFILE) return;
   const staff    = PROFILE.staff    || {};
   const contract = PROFILE.contract || null;
-  const allDocs  = Array.isArray(PROFILE.allDocs) ? PROFILE.allDocs : [];
 
-  // 找已上傳的已簽名契約文件
-  const ctDoc = allDocs.find(d => d['文件類型'] === 'CONTRACT_SIGNED') || null;
-
-  // 先全部隱藏
   setEl('ct-ok','none');
-  setEl('ct-steps-bar','none');
   setEl('ct-wait','none');
   setEl('ct-info-card','none');
-  setEl('ct-download-card','none');
-  setEl('ct-sign-hint-card','none');
-  setEl('ct-upload-card','none');
+  setEl('ct-content','none');
 
-  // 尚未生成契約
+  // 填乙方資料
+  const setPb = (id, text) => { const el = document.getElementById(id); if (el) el.textContent = text; };
+  setPb('ct-pb-name',  '姓名：'       + (staff.name    || '—'));
+  setPb('ct-pb-id',    '身份證字號：' + (staff.idNumber || '—'));
+  setPb('ct-pb-addr',  '現居地址：'   + (staff.address  || '—'));
+  setPb('ct-pb-phone', '連絡電話：'   + (staff.phone    || '—'));
+
   if (!contract) {
     setEl('ct-wait','flex');
     return;
   }
 
-  // 顯示契約資訊
+  const signed = contract['狀態'] === '已簽署';
+
   setEl('ct-info-card','block');
   document.getElementById('ct-info-rows').innerHTML =
-    mkDr('生成日期', contract['生成時間'] || '—') +
-    mkDr('狀態', `<span class="bdg ${ctDoc && ctDoc['審核狀態']==='APPROVED' ? 'bok' : ctDoc ? 'bw' : 'bg'}">${ctDoc && ctDoc['審核狀態']==='APPROVED' ? '已審核通過' : ctDoc ? '待審核' : '待上傳簽名'}</span>`);
+    mkDr('生成時間', contract['生成時間'] || '—') +
+    mkDr('狀態', `<span class="bdg ${signed ? 'bok' : 'bw'}">${contract['狀態'] || '待簽署'}</span>`) +
+    (signed ? mkDr('簽署時間', contract['簽署時間'] || '—') : '');
 
-  // 契約掃描已審核通過
-  if (ctDoc && ctDoc['審核狀態'] === 'APPROVED') {
+  if (signed) {
     setEl('ct-ok','flex');
-    document.getElementById('ct-ok-msg').textContent = `居間承攬契約簽名掃描檔已通過審核，感謝您完成簽署流程。`;
-    // 步驟條全 done
-    setEl('ct-steps-bar','flex');
-    ['ct-s1','ct-s2','ct-s3'].forEach(id => {
-      const el = document.getElementById(id);
-      el.className = 'ct-step done';
-    });
-    return;
-  }
-
-  // 顯示三步驟條
-  setEl('ct-steps-bar','flex');
-
-  // 判斷目前在哪一步
-  const hasPdf = !!(contract['Drive檔案ID']);
-  const hasUploaded = !!ctDoc;
-
-  // 更新步驟條樣式
-  const s1 = document.getElementById('ct-s1');
-  const s2 = document.getElementById('ct-s2');
-  const s3 = document.getElementById('ct-s3');
-
-  if (hasUploaded) {
-    s1.className = 'ct-step done';
-    s2.className = 'ct-step done';
-    s3.className = 'ct-step active';
-  } else if (hasPdf) {
-    s1.className = 'ct-step done';
-    s2.className = 'ct-step active';
-    s3.className = 'ct-step';
+    document.getElementById('ct-ok-msg').textContent = `居間承攬契約已於 ${contract['簽署時間']} 線上確認同意。`;
   } else {
-    s1.className = 'ct-step active';
-    s2.className = 'ct-step';
-    s3.className = 'ct-step';
+    // 重設 checkbox
+    const cb = document.getElementById('ct-cb');
+    if (cb) cb.checked = false;
+    setEl('ct-content','block');
   }
+}
 
-  // Step 1：下載 PDF
-  setEl('ct-download-card','block');
-  if (hasPdf) {
-    setEl('ct-pdf-row','flex');
-    document.getElementById('ct-pdf-name').textContent = `居間承攬契約_${staff.region}_${staff.name}.pdf`;
-    document.getElementById('ct-pdf-link').href = `https://drive.google.com/file/d/${contract['Drive檔案ID']}/view`;
-  } else {
-    setEl('ct-pdf-row','none');
-    // 無 PDF 時替換說明
-    const card = document.getElementById('ct-download-card');
-    const alDiv = card.querySelector('.al');
-    if (alDiv) alDiv.querySelector('div').textContent = '管理員尚未產生您的契約 PDF，請稍後再回來確認，或聯絡業務負責人。';
-  }
-
-  // Step 2：提示
-  setEl('ct-sign-hint-card','block');
-
-  // Step 3：上傳
-  setEl('ct-upload-card','block');
-
-  if (hasUploaded) {
-    // 已上傳，顯示狀態
-    document.getElementById('ct-upload-area').innerHTML = `
-      <div class="upload-done">
-        ✓ 已上傳簽名掃描檔・等待管理員審核
-        <button class="copy-btn" style="margin-left:auto" onclick="triggerUpload('CONTRACT_SIGNED')">重新上傳</button>
-      </div>`;
-    const badge = document.getElementById('ct-upload-badge');
-    badge.className = 'bdg bw';
-    badge.textContent = '待審核';
-  } else {
-    // 尚未上傳
-    document.getElementById('ct-upload-area').innerHTML = `
-      <div class="upload-zone" onclick="triggerUpload('CONTRACT_SIGNED')">
-        📎 點此選擇已簽名契約掃描檔
-      </div>`;
-    const badge = document.getElementById('ct-upload-badge');
-    badge.className = 'bdg bw';
-    badge.textContent = '待上傳';
-  }
+async function doSignContract() {
+  if (!document.getElementById('ct-cb').checked) { toast('請先勾選確認已閱讀'); return; }
+  const r = await run('signContract', {token:TOKEN});
+  if (!r.ok) { toast(r.error); return; }
+  await loadProfile(); renderContract(); renderOverview(); toast('✓ 居間承攬契約簽署完成！');
 }
 
 // ════════════════════
