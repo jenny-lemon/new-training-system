@@ -170,6 +170,14 @@ button,input,select,textarea{font-family:var(--font);}button{cursor:pointer;}
 /* TOAST */
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1A1917;color:#fff;padding:10px 20px;border-radius:var(--r8);font-size:13px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:999;max-width:90vw;text-align:center;}
 .toast.show{opacity:1;}
+
+/* CONTRACT STEP FLOW */
+.ct-steps{display:flex;gap:0;margin-bottom:18px;border-radius:var(--r8);overflow:hidden;border:1px solid var(--bdr);}
+.ct-step{flex:1;padding:10px 8px;text-align:center;font-size:11px;font-weight:600;background:var(--g50);color:var(--g400);border-right:1px solid var(--bdr);}
+.ct-step:last-child{border-right:none;}
+.ct-step.done{background:var(--teal-lt);color:var(--teal-dk);}
+.ct-step.active{background:var(--coral-lt);color:var(--coral-dk);}
+.ct-step-num{display:block;font-size:16px;margin-bottom:2px;}
 </style>
 </head>
 <body>
@@ -356,64 +364,107 @@ button,input,select,textarea{font-family:var(--font);}button{cursor:pointer;}
         </div>
       </div>
 
-      <!-- 居間承攬契約 -->
+      <!-- ═══════════════════════════════════════════════════════════
+           居間承攬契約  (PDF 下載 → 親筆簽名 → 掃描上傳)
+           ═══════════════════════════════════════════════════════════ -->
       <div id="p-contract" class="fp" style="display:none">
         <div class="topbar"><div><div class="ph">居間承攬契約</div></div></div>
-        <div class="al al-ok" id="ct-ok" style="display:none"><span class="al-icon">✓</span><div id="ct-ok-msg"></div></div>
-        <div class="al al-w" id="ct-todo" style="display:none"><span class="al-icon">⚠</span><div>請詳閱以下契約後點選確認同意.</div></div>
-        <div class="al al-i" id="ct-wait" style="display:none"><span class="al-icon">ℹ</span><div>契約尚未生成,請等待管理員審核開通帳號後再確認.</div></div>
-        <div class="card">
+
+        <!-- 已完成 -->
+        <div class="al al-ok" id="ct-ok" style="display:none">
+          <span class="al-icon">✓</span><div id="ct-ok-msg"></div>
+        </div>
+
+        <!-- 流程步驟條 -->
+        <div class="ct-steps" id="ct-steps-bar" style="display:none">
+          <div class="ct-step" id="ct-s1"><span class="ct-step-num">①</span>下載契約</div>
+          <div class="ct-step" id="ct-s2"><span class="ct-step-num">②</span>親筆簽名</div>
+          <div class="ct-step" id="ct-s3"><span class="ct-step-num">③</span>掃描上傳</div>
+        </div>
+
+        <!-- 尚未生成 -->
+        <div class="al al-i" id="ct-wait" style="display:none">
+          <span class="al-icon">ℹ</span>
+          <div>契約尚未生成，請等待管理員審核開通帳號後再回來確認。</div>
+        </div>
+
+        <!-- 契約資訊卡 -->
+        <div class="card" id="ct-info-card" style="display:none">
           <div class="card-hd"><div class="card-title">契約資訊</div></div>
-          <div id="ct-info"></div>
-          <div class="pdf-prev" id="ct-pdf" style="display:none;margin-top:12px">
-            <div class="pdf-icon">HTML</div>
-            <div style="flex:1"><div id="ct-pdf-name" style="font-size:12px;font-weight:600"></div><div style="font-size:11px;color:var(--g400)">含線上同意記錄</div></div>
-            <a id="ct-pdf-link" class="btn btn-sm" target="_blank">⬡ 開啟</a>
+          <div id="ct-info-rows"></div>
+        </div>
+
+        <!-- STEP 1：下載契約 PDF -->
+        <div class="card" id="ct-download-card" style="display:none">
+          <div class="card-hd"><div class="card-title">步驟 1 · 下載契約</div></div>
+          <div class="al al-i">
+            <span class="al-icon">📄</span>
+            <div>管理員已為您產生專屬契約，請點下方按鈕下載 PDF，列印後親筆簽名。</div>
+          </div>
+          <div class="pdf-prev" id="ct-pdf-row" style="display:none">
+            <div class="pdf-icon">PDF</div>
+            <div style="flex:1">
+              <div id="ct-pdf-name" style="font-size:12px;font-weight:600;color:var(--g800)"></div>
+              <div style="font-size:11px;color:var(--g400)">點選右方按鈕下載或開啟</div>
+            </div>
+            <a id="ct-pdf-link" class="btn btn-p btn-sm" target="_blank">⬇ 下載契約</a>
+          </div>
+          <div style="margin-top:12px;font-size:12px;color:var(--g500);line-height:1.8;">
+            <strong>注意事項：</strong><br>
+            · 請列印後，在乙方欄位以藍筆或黑筆親筆簽名、蓋章（或按指印）。<br>
+            · 簽完後以手機拍照或掃描，存成 JPG 或 PDF 檔案。<br>
+            · 再回到本頁步驟 3 上傳已簽名的契約掃描檔。
           </div>
         </div>
-        <div class="card" id="ct-content" style="display:none">
-          <div class="card-hd"><div class="card-title">居間承攬契約全文</div></div>
-          <div class="contract-body">
-            <div class="contract-art"><div class="contract-art-t">第一條 合約期間</div><div class="contract-art-b"><p>1. 中華民國 115 年 4 月 1 日至 116 年 3 月 31 日止,共計一年.</p><p>2. 期滿後以相同條件自動展延一年;任一方欲終止應於前一個月告知他方.</p></div></div>
-            <div class="contract-art"><div class="contract-art-t">第二條 媒合方式說明</div><div class="contract-art-b"><p>1. 乙方同意每月前 3 個日曆天提供下月可媒合之勞務時段.</p><p>2. 媒合成立時乙方與甲方客戶之間成立承攬契約;乙方得自行決定是否承接,甲方不得干涉.</p></div></div>
-            <div class="contract-art"><div class="contract-art-t">第三條 勞務報酬計算與給付</div><div class="contract-art-b"><p>乙方同意甲方自總費用中抽取 35–50% 媒合費用;甲方每月 10 日及 20 日分別結算代收勞務款,遇例假日順延.</p></div></div>
-            <div class="contract-art"><div class="contract-art-t">第四條 承攬服務要求</div><div class="contract-art-b"><p>乙方不得故意或過失損壞或偷竊甲方客戶物品;偷竊者甲方得解除本約並請求損害賠償.</p></div></div>
-            <div class="contract-art"><div class="contract-art-t">第五條至第八條</div><div class="contract-art-b"><p>無法履行程序,保密條款,管轄法院(台灣台北地方法院),附則悉依民法承攬章節辦理.</p></div></div>
-            <div class="sig-block">
-              <div>
-                <div style="font-weight:700;margin-bottom:4px">甲方:檸檬專業清潔有限公司</div>
-                <div>負責人:謝曜聲 統一編號:42627791</div>
-                <div style="margin-top:6px"><svg width="52" height="52" viewBox="0 0 80 80"><circle cx="40" cy="40" r="38" fill="none" stroke="#C0392B" stroke-width="2.5"/><circle cx="40" cy="40" r="30" fill="none" stroke="#C0392B" stroke-width="1.2"/><text x="40" y="26" font-size="7" fill="#C0392B" text-anchor="middle" font-weight="700">檸檬專業清潔</text><text x="40" y="37" font-size="7" fill="#C0392B" text-anchor="middle" font-weight="700">有限公司</text><text x="40" y="50" font-size="8.5" fill="#C0392B" text-anchor="middle" font-weight="700">謝曜聲</text></svg></div>
-              </div>
-              <div class="sig-party-b">
-                <div style="font-weight:700;margin-bottom:6px">乙方(您的資料)</div>
-                <div id="ct-pb-name"></div><div id="ct-pb-id"></div>
-                <div id="ct-pb-addr"></div><div id="ct-pb-phone"></div>
-                <div style="font-size:11px;color:var(--g400);margin-top:6px;padding-top:6px;border-top:1px dashed var(--g200)">點選同意後系統自動記錄時間</div>
-              </div>
+
+        <!-- STEP 2：說明（靜態提示） -->
+        <div class="card" id="ct-sign-hint-card" style="display:none">
+          <div class="card-hd"><div class="card-title">步驟 2 · 親筆簽名</div></div>
+          <div style="font-size:13px;color:var(--g600);line-height:2;">
+            請在下載的契約 PDF 上，於乙方欄位：<br>
+            <span style="display:inline-block;background:var(--amber-lt);color:var(--amber);padding:2px 8px;border-radius:4px;font-weight:600;margin:4px 0;">簽名 ／ 蓋章 ／ 按指印（擇一）</span><br>
+            完成後請拍照或掃描，再進行步驟 3 上傳。
+          </div>
+        </div>
+
+        <!-- STEP 3：上傳已簽名契約 -->
+        <div class="card" id="ct-upload-card" style="display:none">
+          <div class="card-hd">
+            <div class="card-title">步驟 3 · 上傳已簽名契約</div>
+            <span id="ct-upload-badge" class="bdg bw">待上傳</span>
+          </div>
+          <div class="al al-i">
+            <span class="al-icon">ℹ</span>
+            <div>請上傳已親筆簽名的契約掃描檔（JPG / PNG / PDF，10MB 以內）。</div>
+          </div>
+          <div id="ct-upload-area">
+            <div class="upload-zone" onclick="triggerUpload('CONTRACT_SIGNED')">
+              📎 點此選擇已簽名契約掃描檔
             </div>
           </div>
-          <div style="display:flex;align-items:center;gap:10px;font-size:13px;font-weight:500;">
-            <input type="checkbox" id="ct-cb" style="width:16px;height:16px;accent-color:var(--coral);">
-            <label for="ct-cb">我已詳閱全文並同意簽署本居間承攬契約</label>
-          </div>
-          <button class="btn btn-p" style="margin-top:12px;width:100%" onclick="doSignContract()">確認同意並簽署</button>
         </div>
-      </div>
+
+      </div><!-- /p-contract -->
 
       <!-- 證件提供 -->
       <div id="p-docs" class="fp" style="display:none">
         <div class="topbar"><div><div class="ph">證件提供</div></div></div>
         <div class="card">
           <div class="card-hd"><div class="card-title">身份證</div><span id="doc-id-badge" class="bdg bw">待上傳</span></div>
-          <div id="doc-front-area"><div class="upload-zone" onclick="triggerUpload('ID_FRONT')">📷 上傳身份證正面(JPG/PNG,10MB 以內)</div></div>
+          <div id="doc-front-area">
+            <div class="upload-zone" onclick="triggerUpload('ID_FRONT')">📷 上傳身份證正面(JPG/PNG,10MB 以內)</div>
+          </div>
           <div style="height:10px"></div>
-          <div id="doc-back-area"><div class="upload-zone" onclick="triggerUpload('ID_BACK')">📷 上傳身份證反面(JPG/PNG,10MB 以內)</div></div>
+          <div id="doc-back-area">
+            <div class="upload-zone" onclick="triggerUpload('ID_BACK')">📷 上傳身份證反面(JPG/PNG,10MB 以內)</div>
+          </div>
         </div>
         <div class="card">
           <div class="card-hd"><div class="card-title">良民證</div><span id="doc-gc-badge" class="bdg bg">未繳</span></div>
           <div class="al al-i"><span class="al-icon">ℹ</span><div>需繳交正本(出生至今,無犯罪紀錄),此處上傳掃描檔供管理員預覽;正本請親自或郵寄至公司.</div></div>
-          <div id="doc-gc-area"><div class="upload-zone" onclick="triggerUpload('GOOD_CONDUCT')">📎 上傳良民證掃描檔(JPG/PNG/PDF)</div></div>
+          <div id="doc-gc-area">
+            <div class="upload-zone" onclick="triggerUpload('GOOD_CONDUCT')">📎 上傳良民證掃描檔(JPG/PNG/PDF)</div>
+          </div>
         </div>
         <input type="file" id="file-input" style="display:none" accept="image/jpeg,image/png,application/pdf" onchange="handleFileUpload()">
       </div>
@@ -423,23 +474,9 @@ button,input,select,textarea{font-family:var(--font);}button{cursor:pointer;}
         <div class="topbar"><div><div class="ph">銀行帳號</div><div class="ps">報酬匯款帳戶</div></div></div>
         <div class="al al-i">
           <span class="al-icon">💡</span>
-          <div><strong>元大銀行開戶說明</strong><br>
-          <a href="https://www.yuantabank.com.tw/bankwebIMG/event/Bank_Act2021/openacct/index.html" target="_blank">網路開戶：點此前往元大網路開戶 ↗</a><br>
-          至分行開戶請避開午休（12:00–13:30），告知欲開薪轉戶，提供公司名稱：<strong>檸檬專業清潔有限公司</strong>，統編 <strong>42627791</strong>。</div>
-        </div>
-        <div class="al al-i">
-          <span class="al-icon">💡</span>
           <div>
             <strong>元大銀行開戶說明</strong><br>
             網路開戶：<a href="https://www.yuantabank.com.tw/bankwebIMG/event/Bank_Act2021/openacct/index.html" target="_blank">點此前往元大網路開戶 ↗</a><br>
-            至分行開戶請避開午休（12:00–13:30），告知欲開薪轉戶，提供公司名稱：<strong>檸檬專業清潔有限公司</strong>，統編 <strong>42627791</strong>。
-          </div>
-        </div>
-        <div class="al al-i">
-          <span class="al-icon">💡</span>
-          <div>
-            <strong>元大銀行開戶說明</strong><br>
-            <a href="https://www.yuantabank.com.tw/bankwebIMG/event/Bank_Act2021/openacct/index.html" target="_blank">網路開戶：點此前往元大網路開戶 ↗</a><br>
             至分行開戶請避開午休（12:00–13:30），告知欲開<strong>薪轉戶</strong>，提供公司名稱：<strong>檸檬專業清潔有限公司</strong>，統編 42627791。
           </div>
         </div>
@@ -532,25 +569,24 @@ let PROFILE = null;
 let _uploadType = '';
 
 // ════════════════════
-//  API 呼叫(fetch POST)
-//  回傳 Promise<result>
+//  API 呼叫
 // ════════════════════
 const API_URL = 'https://new-training.jenny-bed.workers.dev';
 
 async function run(action, data) {
   try {
     const actionMap = {
-      'staffLogin':       '/api/staff-login',
-      'logout':           '/api/logout',
-      'getRegionNames':   '/api/get-region-names',
-      'registerNewbie':   '/api/register-newbie',
-      'getMyProfile':     '/api/my-profile',
-      'agreeRules':       '/api/agree-rules',
-      'signContract':     '/api/sign-contract',
-      'updateMyBank':     '/api/update-bank',
-      'submitDeposit':    '/api/submit-deposit',
-      'applyRefund':      '/api/apply-refund',
-      'uploadDoc':        '/api/upload-doc',
+      'staffLogin':     '/api/staff-login',
+      'logout':         '/api/logout',
+      'getRegionNames': '/api/get-region-names',
+      'registerNewbie': '/api/register-newbie',
+      'getMyProfile':   '/api/my-profile',
+      'agreeRules':     '/api/agree-rules',
+      'signContract':   '/api/sign-contract',
+      'updateMyBank':   '/api/update-bank',
+      'submitDeposit':  '/api/submit-deposit',
+      'applyRefund':    '/api/apply-refund',
+      'uploadDoc':      '/api/upload-doc',
     };
     const path = actionMap[action] || '/api/' + action.replace(/([A-Z])/g, '-$1').toLowerCase();
     const res = await fetch(API_URL + path, {
@@ -588,7 +624,6 @@ function expandSb()  { document.getElementById('sidebar').classList.remove('hidd
 // ════════════════════
 //  登入
 // ════════════════════
-// 頁面載入時自動還原 session
 window.addEventListener('DOMContentLoaded', async () => {
   if (TOKEN) {
     const r = await run('getMyProfile', { token: TOKEN });
@@ -613,17 +648,14 @@ async function doLogin() {
   if (!id || !tel) { showErr('login-err','請填寫身份證字號與手機號碼後 4 碼'); return; }
   hideErr('login-err');
   setBtnLoading('login-btn', true);
-
   const r = await run('staffLogin', {idNumber:id, phone:tel});
   setBtnLoading('login-btn', false);
   if (!r.ok) { showErr('login-err', r.error); return; }
-
   TOKEN = r.token;
   localStorage.setItem('lemon_token', TOKEN);
   document.getElementById('nav-name').textContent = r.name;
   document.getElementById('nav-role').textContent = r.region;
   document.getElementById('nav-av').textContent   = r.name.charAt(0);
-
   await loadProfile();
   showPg('pg-main');
   go('overview', document.getElementById('n-overview'));
@@ -658,22 +690,13 @@ function autoSlashDob(el) {
 }
 
 async function doRegister() {
-  // 用英文 key 傳送，避免中文 key 被  encode 破壞
   setBtnLoading('reg-btn', true);
   const r = await run('registerNewbie', {
-    name: v('r-name'),
-    idNumber: v('r-id'),
-    dob: v('r-dob'),
-    phone: v('r-phone'),
-    email: v('r-email'),
-    address: v('r-addr'),
-    ecName: v('r-ec-name'),
-    ecRel: v('r-ec-rel'),
-    ecPhone: v('r-ec-phone'),
-    transport: v('r-transport'),
-    vaccine: v('r-vaccine'),
-    region: v('r-region'),
-    referrer: v('r-referrer'),
+    name: v('r-name'), idNumber: v('r-id'), dob: v('r-dob'),
+    phone: v('r-phone'), email: v('r-email'), address: v('r-addr'),
+    ecName: v('r-ec-name'), ecRel: v('r-ec-rel'), ecPhone: v('r-ec-phone'),
+    transport: v('r-transport'), vaccine: v('r-vaccine'),
+    region: v('r-region'), referrer: v('r-referrer'),
   });
   setBtnLoading('reg-btn', false);
   if (!r.ok) { showErr('reg-err', r.error); return; }
@@ -692,36 +715,6 @@ async function loadProfile() {
 // ════════════════════
 //  個人總覽
 // ════════════════════
-function renderDocs() {
-  if (!PROFILE) return;
-  const { idFront: idf, idBack: idb, gc } = PROFILE.docs || {};
-
-  const mk = (doc) => doc
-    ? `<div class="upload-done">✓ 已上傳 · ${doc['審核狀態']==='APPROVED' ? '審核通過' : '待審核'}<button class="copy-btn" style="margin-left:auto" onclick="triggerUpload('${doc['文件類型']}')">重新上傳</button></div>`
-    : null;
-
-  document.getElementById('doc-front-area').innerHTML = idf
-    ? mk(idf)
-    : `<div class="upload-zone" onclick="triggerUpload('ID_FRONT')">📷 上傳身份證正面(JPG/PNG,10MB 以內)</div>`;
-
-  document.getElementById('doc-back-area').innerHTML = idb
-    ? mk(idb)
-    : `<div class="upload-zone" onclick="triggerUpload('ID_BACK')">📷 上傳身份證反面(JPG/PNG,10MB 以內)</div>`;
-
-  document.getElementById('doc-gc-area').innerHTML = gc
-    ? mk(gc)
-    : `<div class="upload-zone" onclick="triggerUpload('GOOD_CONDUCT')">📎 上傳良民證掃描檔(JPG/PNG/PDF)</div>`;
-
-  const bothUploaded = !!idf && !!idb;
-  const bothApproved = bothUploaded && idf['審核狀態']==='APPROVED' && idb['審核狀態']==='APPROVED';
-
-  document.getElementById('doc-id-badge').className = 'bdg ' + (bothApproved ? 'bok' : bothUploaded ? 'bw' : 'bw');
-  document.getElementById('doc-id-badge').textContent = bothApproved ? '已審核' : bothUploaded ? '待審核' : '待上傳';
-
-  document.getElementById('doc-gc-badge').className = 'bdg ' + (gc && gc['審核狀態']==='APPROVED' ? 'bok' : gc ? 'bw' : 'bg');
-  document.getElementById('doc-gc-badge').textContent = gc && gc['審核狀態']==='APPROVED' ? '已確認' : gc ? '待確認' : '未繳';
-}
-
 function ovRow(navId, goId, status, icon, label, valHtml, clickable) {
   const siClass = status==='ok'?'si-ok':status==='warn'?'si-w':'si-no';
   const labelStyle = clickable ? 'color:var(--coral)' : '';
@@ -731,6 +724,58 @@ function ovRow(navId, goId, status, icon, label, valHtml, clickable) {
     <div class="sv-lbl" style="${labelStyle}">${label}</div>
     <div class="sv-val">${valHtml}</div>
   </div>`;
+}
+
+function renderOverview() {
+  if (!PROFILE) return;
+  const { staff, rules, contract, docs, bank, deposit } = PROFILE;
+  const r = rules;
+  const c = contract;
+  const idf = docs && docs.idFront;
+  const idb = docs && docs.idBack;
+  const gc  = docs && docs.gc;
+  // 找契約上傳文件
+  const ctDoc = PROFILE.allDocs && PROFILE.allDocs.find(d=>d['文件類型']==='CONTRACT_SIGNED');
+
+  document.getElementById('ov-sub').textContent = `${staff.name} · ${staff.region}`;
+
+  const items = [
+    ovRow('n-profile','profile','ok','✓','個人資料',`<span class="bdg bok">已建立</span>`,true),
+    ovRow('n-rules','rules', r?'ok':'warn', r?'✓':'!', '團隊規章',
+      r ? `<span class="bdg bok">已同意</span><span class="sv-sub">${r['同意時間']}</span>`
+        : `<span class="bdg bw">待同意</span>`, true),
+    ovRow('n-contract','contract',
+      (c && c['狀態']==='已簽署' && ctDoc && ctDoc['審核狀態']==='APPROVED') ? 'ok'
+      : (c ? 'warn') : 'no',
+      (c && c['狀態']==='已簽署' && ctDoc && ctDoc['審核狀態']==='APPROVED') ? '✓' : c ? '!' : '–',
+      '居間承攬契約',
+      !c ? `<span class="bdg bg">待生成</span>`
+         : ctDoc && ctDoc['審核狀態']==='APPROVED' ? `<span class="bdg bok">審核通過</span>`
+         : ctDoc ? `<span class="bdg bw">待審核</span>`
+         : `<span class="bdg bw">待上傳簽名</span>`, true),
+    ovRow('n-docs','docs',
+      (idf && idb && idf['審核狀態']==='APPROVED' && idb['審核狀態']==='APPROVED') ? 'ok'
+      : (idf || idb) ? 'warn' : 'no',
+      (idf && idb && idf['審核狀態']==='APPROVED' && idb['審核狀態']==='APPROVED') ? '✓' : (idf||idb) ? '!' : '–',
+      '身份證',
+      (idf && idb) ? (idf['審核狀態']==='APPROVED'&&idb['審核狀態']==='APPROVED' ? `<span class="bdg bok">已審核</span>` : `<span class="bdg bw">待審核</span>`)
+                   : `<span class="bdg bg">待上傳</span>`, true),
+    ovRow('n-docs','docs',
+      gc && gc['審核狀態']==='APPROVED' ? 'ok' : gc ? 'warn' : 'no',
+      gc && gc['審核狀態']==='APPROVED' ? '✓' : gc ? '!' : '–',
+      '良民證',
+      gc ? (gc['審核狀態']==='APPROVED' ? `<span class="bdg bok">已確認</span>` : `<span class="bdg bw">待確認</span>`)
+         : `<span class="bdg bg">未繳</span>`, true),
+    ovRow('n-bank','bank', bank?'ok':'warn', bank?'✓':'!', '銀行帳號',
+      bank ? `<span class="bdg bok">已設定</span><span class="sv-sub">${bank['銀行名稱']}</span>` : `<span class="bdg bw">待設定</span>`, true),
+    ovRow('n-deposit','deposit',
+      deposit && deposit['對帳狀態']==='已對帳' ? 'ok' : deposit ? 'warn' : 'no',
+      deposit && deposit['對帳狀態']==='已對帳' ? '✓' : deposit ? '!' : '–',
+      '工具包押金',
+      deposit ? (deposit['對帳狀態']==='已對帳' ? `<span class="bdg bok">已繳交</span>` : `<span class="bdg bw">待確認</span>`)
+              : `<span class="bdg bg">未繳</span>`, true),
+  ];
+  document.getElementById('ov-list').innerHTML = items.join('');
 }
 
 // ════════════════════
@@ -747,7 +792,7 @@ function renderProfile() {
     ['交通工具',s.transport||'—'],['新冠疫苗',s.vaccine||'—'],
     ['服務地區',s.region],['帳號狀態',`<span class="bdg bok">${s.status}</span>`],
   ];
-  document.getElementById('profile-rows').innerHTML = rows.map(([l,v])=>mkDr(l,v)).join('');
+  document.getElementById('profile-rows').innerHTML = rows.map(([l,vv])=>mkDr(l,vv)).join('');
 }
 
 // ════════════════════
@@ -767,85 +812,211 @@ function renderRules() {
 
 async function doAgreeRules() {
   if (!document.getElementById('rules-cb').checked) { toast('請先勾選確認已閱讀'); return; }
-  // 嘗試取得 IP
   let ip = '';
-  try {
-    const ipResp = await fetch('https://api.ipify.org?format=json');
-    const ipData = await ipResp.json();
-    ip = ipData.ip || '';
-  } catch(e) {}
+  try { const ipResp = await fetch('https://api.ipify.org?format=json'); const ipData = await ipResp.json(); ip = ipData.ip || ''; } catch(e) {}
   const r = await run('agreeRules', {token:TOKEN, ip});
   if (!r.ok) { toast(r.error); return; }
   await loadProfile(); renderRules(); renderOverview(); toast('✓ 已同意團隊規章');
 }
 
-// ════════════════════
-//  契約
-// ════════════════════
+// ════════════════════════════════════════════════════
+//  居間承攬契約  (PDF 下載 → 親筆簽名 → 掃描上傳)
+// ════════════════════════════════════════════════════
 function renderContract() {
   if (!PROFILE) return;
-  const { staff, contract } = PROFILE;
-  setEl('ct-ok','none'); setEl('ct-todo','none'); setEl('ct-wait','none'); setEl('ct-content','none'); setEl('ct-pdf','none');
+  const { staff, contract, allDocs } = PROFILE;
 
-  document.getElementById('ct-pb-name').textContent  = '姓名:' + staff.name;
-  document.getElementById('ct-pb-id').textContent    = '身份證字號:' + staff.idNumber;
-  document.getElementById('ct-pb-addr').textContent  = '現居地址:' + (staff.address||'—');
-  document.getElementById('ct-pb-phone').textContent = '連絡電話:' + staff.phone;
+  // 找已上傳的已簽名契約文件
+  const ctDoc = allDocs && allDocs.find(d => d['文件類型'] === 'CONTRACT_SIGNED');
 
+  // 先全部隱藏
+  setEl('ct-ok','none');
+  setEl('ct-steps-bar','none');
+  setEl('ct-wait','none');
+  setEl('ct-info-card','none');
+  setEl('ct-download-card','none');
+  setEl('ct-sign-hint-card','none');
+  setEl('ct-upload-card','none');
+
+  // 尚未生成契約
   if (!contract) {
     setEl('ct-wait','flex');
-    document.getElementById('ct-info').innerHTML = mkDr('狀態','<span class="bdg bg">尚未生成</span>');
     return;
   }
 
-  document.getElementById('ct-info').innerHTML =
-    mkDr('狀態',`<span class="bdg ${contract['狀態']==='已簽署'?'bok':'bw'}">${contract['狀態']}</span>`) +
-    mkDr('生成時間', contract['生成時間']) +
-    (contract['簽署時間'] ? mkDr('線上同意時間', contract['簽署時間']) : '');
+  // 顯示契約資訊
+  setEl('ct-info-card','block');
+  document.getElementById('ct-info-rows').innerHTML =
+    mkDr('生成日期', contract['生成時間'] || '—') +
+    mkDr('狀態', `<span class="bdg ${ctDoc && ctDoc['審核狀態']==='APPROVED' ? 'bok' : ctDoc ? 'bw' : 'bg'}">${ctDoc && ctDoc['審核狀態']==='APPROVED' ? '已審核通過' : ctDoc ? '待審核' : '待上傳簽名'}</span>`);
 
-  if (contract['狀態']==='已簽署') {
+  // 契約掃描已審核通過
+  if (ctDoc && ctDoc['審核狀態'] === 'APPROVED') {
     setEl('ct-ok','flex');
-    document.getElementById('ct-ok-msg').textContent = `契約已於 ${contract['簽署時間']} 線上確認同意.`;
-    if (contract['Drive檔案ID']) {
-      setEl('ct-pdf','flex');
-      document.getElementById('ct-pdf-name').textContent = `檸檬家事居間承攬契約_${staff.region}_${staff.name}.html`;
-      document.getElementById('ct-pdf-link').href = `https://drive.google.com/file/d/${contract['Drive檔案ID']}/view`;
-    }
+    document.getElementById('ct-ok-msg').textContent = `居間承攬契約簽名掃描檔已通過審核，感謝您完成簽署流程。`;
+    // 步驟條全 done
+    setEl('ct-steps-bar','flex');
+    ['ct-s1','ct-s2','ct-s3'].forEach(id => {
+      const el = document.getElementById(id);
+      el.className = 'ct-step done';
+    });
+    return;
+  }
+
+  // 顯示三步驟條
+  setEl('ct-steps-bar','flex');
+
+  // 判斷目前在哪一步
+  const hasPdf = !!(contract['Drive檔案ID']);
+  const hasUploaded = !!ctDoc;
+
+  // 更新步驟條樣式
+  const s1 = document.getElementById('ct-s1');
+  const s2 = document.getElementById('ct-s2');
+  const s3 = document.getElementById('ct-s3');
+
+  if (hasUploaded) {
+    s1.className = 'ct-step done';
+    s2.className = 'ct-step done';
+    s3.className = 'ct-step active';
+  } else if (hasPdf) {
+    s1.className = 'ct-step done';
+    s2.className = 'ct-step active';
+    s3.className = 'ct-step';
   } else {
-    setEl('ct-todo','flex'); setEl('ct-content','block');
+    s1.className = 'ct-step active';
+    s2.className = 'ct-step';
+    s3.className = 'ct-step';
+  }
+
+  // Step 1：下載 PDF
+  setEl('ct-download-card','block');
+  if (hasPdf) {
+    setEl('ct-pdf-row','flex');
+    document.getElementById('ct-pdf-name').textContent = `居間承攬契約_${staff.region}_${staff.name}.pdf`;
+    document.getElementById('ct-pdf-link').href = `https://drive.google.com/file/d/${contract['Drive檔案ID']}/view`;
+  } else {
+    setEl('ct-pdf-row','none');
+    // 無 PDF 時替換說明
+    const card = document.getElementById('ct-download-card');
+    const alDiv = card.querySelector('.al');
+    if (alDiv) alDiv.querySelector('div').textContent = '管理員尚未產生您的契約 PDF，請稍後再回來確認，或聯絡業務負責人。';
+  }
+
+  // Step 2：提示
+  setEl('ct-sign-hint-card','block');
+
+  // Step 3：上傳
+  setEl('ct-upload-card','block');
+
+  if (hasUploaded) {
+    // 已上傳，顯示狀態
+    document.getElementById('ct-upload-area').innerHTML = `
+      <div class="upload-done">
+        ✓ 已上傳簽名掃描檔・等待管理員審核
+        <button class="copy-btn" style="margin-left:auto" onclick="triggerUpload('CONTRACT_SIGNED')">重新上傳</button>
+      </div>`;
+    const badge = document.getElementById('ct-upload-badge');
+    badge.className = 'bdg bw';
+    badge.textContent = '待審核';
+  } else {
+    // 尚未上傳
+    document.getElementById('ct-upload-area').innerHTML = `
+      <div class="upload-zone" onclick="triggerUpload('CONTRACT_SIGNED')">
+        📎 點此選擇已簽名契約掃描檔
+      </div>`;
+    const badge = document.getElementById('ct-upload-badge');
+    badge.className = 'bdg bw';
+    badge.textContent = '待上傳';
   }
 }
 
-async function doSignContract() {
-  if (!document.getElementById('ct-cb').checked) { toast('請先勾選確認已閱讀'); return; }
-  const r = await run('signContract', {token:TOKEN});
-  if (!r.ok) { toast(r.error); return; }
-  await loadProfile(); renderContract(); renderOverview(); toast('✓ 居間承攬契約簽署完成!');
-}
-
 // ════════════════════
-//  文件上傳
+//  證件上傳（唯一定義）
 // ════════════════════
 function renderDocs() {
   if (!PROFILE) return;
-  const { idFront: idf, idBack: idb, gc } = PROFILE.docs;
-  const mk = (doc) => doc
-    ? `<div class="upload-done">✓ 已上傳 · ${doc['審核狀態']==='APPROVED'?'審核通過':'待審核'}<button class="copy-btn" style="margin-left:auto" onclick="triggerUpload('${doc['文件類型']}')">重新上傳</button></div>`
-    : null;
-  if (idf) document.getElementById('doc-front-area').innerHTML = mk(idf);
-  if (idb) document.getElementById('doc-back-area').innerHTML  = mk(idb);
-  if (gc)  document.getElementById('doc-gc-area').innerHTML    = mk(gc);
-  const idBadge = idf&&idb ? (idf['審核狀態']==='APPROVED'&&idb['審核狀態']==='APPROVED'?'已審核':'待審核') : '待上傳';
-  const idCls   = idf&&idb ? (idf['審核狀態']==='APPROVED'&&idb['審核狀態']==='APPROVED'?'bok':'bw') : 'bw';
-  document.getElementById('doc-id-badge').className = 'bdg '+idCls;
-  document.getElementById('doc-id-badge').textContent = idBadge;
-  document.getElementById('doc-gc-badge').className = 'bdg '+(gc&&gc['審核狀態']==='APPROVED'?'bok':gc?'bw':'bg');
-  document.getElementById('doc-gc-badge').textContent = gc&&gc['審核狀態']==='APPROVED'?'已確認':gc?'待確認':'未繳';
+  const docs = PROFILE.docs || {};
+  const idf = docs.idFront;
+  const idb = docs.idBack;
+  const gc  = docs.gc;
+
+  // ── 身份證正面 ──
+  document.getElementById('doc-front-area').innerHTML = idf
+    ? uploadedHtml(idf, 'ID_FRONT')
+    : `<div class="upload-zone" onclick="triggerUpload('ID_FRONT')">📷 上傳身份證正面(JPG/PNG,10MB 以內)</div>`;
+
+  // ── 身份證反面 ──
+  document.getElementById('doc-back-area').innerHTML = idb
+    ? uploadedHtml(idb, 'ID_BACK')
+    : `<div class="upload-zone" onclick="triggerUpload('ID_BACK')">📷 上傳身份證反面(JPG/PNG,10MB 以內)</div>`;
+
+  // ── 良民證 ──
+  document.getElementById('doc-gc-area').innerHTML = gc
+    ? uploadedHtml(gc, 'GOOD_CONDUCT')
+    : `<div class="upload-zone" onclick="triggerUpload('GOOD_CONDUCT')">📎 上傳良民證掃描檔(JPG/PNG/PDF)</div>`;
+
+  // ── 身份證 badge ──
+  const bothUploaded = !!(idf && idb);
+  const bothApproved = bothUploaded && idf['審核狀態']==='APPROVED' && idb['審核狀態']==='APPROVED';
+  const idBadge = document.getElementById('doc-id-badge');
+  idBadge.className = 'bdg ' + (bothApproved ? 'bok' : bothUploaded ? 'bw' : 'bw');
+  idBadge.textContent = bothApproved ? '已審核' : bothUploaded ? '待審核' : '待上傳';
+
+  // ── 良民證 badge ──
+  const gcBadge = document.getElementById('doc-gc-badge');
+  gcBadge.className = 'bdg ' + (gc && gc['審核狀態']==='APPROVED' ? 'bok' : gc ? 'bw' : 'bg');
+  gcBadge.textContent = gc && gc['審核狀態']==='APPROVED' ? '已確認' : gc ? '待確認' : '未繳';
 }
 
-function triggerUpload(t) { 
-  _uploadType = t; 
-  document.getElementById('file-input').click(); 
+// 上傳完成後顯示的 HTML（含狀態標記）
+function uploadedHtml(doc, docType) {
+  const isApproved = doc['審核狀態'] === 'APPROVED';
+  const statusText = isApproved ? '✓ 已審核通過' : '✓ 已上傳・待審核';
+  const statusStyle = isApproved
+    ? 'background:var(--teal-lt);border:1px solid #7ECAAA;color:var(--teal-dk);'
+    : 'background:var(--amber-lt);border:1px solid #EDBA5A;color:#7A5010;';
+  return `<div class="upload-done" style="${statusStyle}">
+    ${statusText}
+    <button class="copy-btn" style="margin-left:auto" onclick="triggerUpload('${docType}')">重新上傳</button>
+  </div>`;
+}
+
+// 本地即時更新 PROFILE.docs（上傳成功後同步畫面）
+function applyUploadedDocToProfile(docType, resp) {
+  if (!PROFILE) return;
+  if (!PROFILE.docs) PROFILE.docs = {};
+
+  const docObj = {
+    '人員ID': PROFILE.staff ? PROFILE.staff.id : '',
+    '姓名': PROFILE.staff ? PROFILE.staff.name : '',
+    '文件類型': docType,
+    '上傳時間': new Date().toLocaleString('zh-TW'),
+    'Drive檔案ID': resp.fileId || '',
+    '審核狀態': '待審核',
+    '審核時間': '',
+    '審核人員': '',
+    '備註': '',
+  };
+
+  if (docType === 'ID_FRONT') PROFILE.docs.idFront = docObj;
+  else if (docType === 'ID_BACK') PROFILE.docs.idBack = docObj;
+  else if (docType === 'GOOD_CONDUCT') PROFILE.docs.gc = docObj;
+  else if (docType === 'CONTRACT_SIGNED') {
+    // allDocs 陣列更新
+    if (!PROFILE.allDocs) PROFILE.allDocs = [];
+    const idx = PROFILE.allDocs.findIndex(d => d['文件類型'] === 'CONTRACT_SIGNED');
+    if (idx >= 0) PROFILE.allDocs[idx] = docObj;
+    else PROFILE.allDocs.push(docObj);
+  }
+}
+
+// ════════════════════
+//  通用上傳處理
+// ════════════════════
+function triggerUpload(t) {
+  _uploadType = t;
+  document.getElementById('file-input').click();
 }
 
 async function handleFileUpload() {
@@ -865,25 +1036,23 @@ async function handleFileUpload() {
     return;
   }
 
-  toast('上傳中,請稍候…');
+  // 立即更新 UI 為「上傳中」
+  setUploadingUI(_uploadType);
+  toast('上傳中，請稍候…');
 
   try {
     const b64 = await fileToB64(file);
 
     const payload = {
       token: TOKEN,
-      staffName: PROFILE && PROFILE.staff ? PROFILE.staff.name : '',
+      staffName: PROFILE.staff.name,
       docType: _uploadType,
       fileName: file.name,
       mimeType: file.type,
       fileData: b64
     };
 
-    console.log('UPLOAD PAYLOAD', payload);
-
     const url = 'https://script.google.com/macros/s/AKfycbxwQ5zFxoFIGdI9BMV4xJwigXe216HyiTOTZwVrLsRNh-UmBjHytuOkt8RK_X6nnLIQ/exec';
-    console.log('UPLOAD URL', url);
-
     const res = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
@@ -891,49 +1060,47 @@ async function handleFileUpload() {
       redirect: 'follow'
     });
 
-    console.log('UPLOAD STATUS', res.status, res.type, res.redirected, res.url);
-
     const text = await res.text();
     const r = JSON.parse(text);
     if (!r.ok) throw new Error(r.error || '未知錯誤');
 
-    // 前台先直接更新本地 PROFILE，讓 docs 頁和總覽頁同步
+    // 更新本地 PROFILE
     applyUploadedDocToProfile(_uploadType, r);
 
-    renderDocs();
+    // 重新渲染對應頁面
+    if (_uploadType === 'CONTRACT_SIGNED') {
+      renderContract();
+    } else {
+      renderDocs();
+    }
     renderOverview();
-
-    toast('✓ 上傳成功!');
+    toast('✓ 上傳成功！等待管理員審核');
     input.value = '';
   } catch (e) {
     console.error('UPLOAD ERROR', e);
-    toast('上傳失敗:' + (e && e.message ? e.message : e));
+    toast('上傳失敗：' + (e && e.message ? e.message : e));
     input.value = '';
-
-    // 失敗後還原畫面
-    renderDocs();
+    // 還原畫面
+    if (_uploadType === 'CONTRACT_SIGNED') renderContract();
+    else renderDocs();
   }
 }
 
+// 上傳中 UI
 function setUploadingUI(docType) {
-  const areaMap = {
-    ID_FRONT: 'doc-front-area',
-    ID_BACK: 'doc-back-area',
-    GOOD_CONDUCT: 'doc-gc-area',
-    CONTRACT_SIGNED: 'contract-upload-area'
-  };
+  const uploading = `<div class="upload-zone" style="cursor:default;color:var(--coral);border-color:var(--coral);background:var(--coral-lt);">
+    ⏳ 上傳中，請稍候，請勿重新整理網頁
+  </div>`;
 
-  const areaId = areaMap[docType];
-  const area = areaId ? document.getElementById(areaId) : null;
-  if (!area) return;
-
-  area.innerHTML = `
-    <div class="upload-zone" style="cursor:default;color:var(--coral);border-color:var(--coral);background:var(--coral-lt);">
-      ⏳ 上傳中，請稍候，請勿重新整理網頁
-    </div>
-  `;
+  if (docType === 'ID_FRONT') document.getElementById('doc-front-area').innerHTML = uploading;
+  else if (docType === 'ID_BACK') document.getElementById('doc-back-area').innerHTML = uploading;
+  else if (docType === 'GOOD_CONDUCT') document.getElementById('doc-gc-area').innerHTML = uploading;
+  else if (docType === 'CONTRACT_SIGNED') {
+    const area = document.getElementById('ct-upload-area');
+    if (area) area.innerHTML = uploading;
+  }
 }
-  
+
 function fileToB64(file) {
   return new Promise(res => {
     const r = new FileReader();
@@ -941,53 +1108,6 @@ function fileToB64(file) {
     r.readAsDataURL(file);
   });
 }
-
-function markUploadedUI(docType, resp) {
-  const areaMap = {
-    ID_FRONT: 'doc-front-area',
-    ID_BACK: 'doc-back-area',
-    GOOD_CONDUCT: 'doc-gc-area',
-    CONTRACT_SIGNED: 'contract-upload-area'
-  };
-
-  const areaId = areaMap[docType];
-  const area = areaId ? document.getElementById(areaId) : null;
-
-  if (area) {
-    area.innerHTML = `
-      <div class="upload-done">
-        ✓ 已上傳${resp.fileName ? ' · ' + escapeHtml(resp.fileName) : ''}
-        <button class="copy-btn" style="margin-left:auto" onclick="triggerUpload('${docType}')">重新上傳</button>
-      </div>
-    `;
-  }
-
-  if (docType === 'ID_FRONT' || docType === 'ID_BACK') {
-    const badge = document.getElementById('doc-id-badge');
-    if (badge) {
-      badge.className = 'bdg bw';
-      badge.textContent = '待審核';
-    }
-  }
-
-  if (docType === 'GOOD_CONDUCT') {
-    const badge = document.getElementById('doc-gc-badge');
-    if (badge) {
-      badge.className = 'bdg bw';
-      badge.textContent = '待確認';
-    }
-  }
-}
-
-function escapeHtml(str) {
-  return String(str || '')
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#39;');
-}
-
 
 // ════════════════════
 //  銀行帳號
@@ -997,17 +1117,18 @@ function renderBank() {
   const bank = PROFILE.bank;
   if (bank) {
     document.getElementById('bank-rows').innerHTML =
-      mkDr('銀行名稱',bank['銀行名稱']) +
-      mkDr('銀行帳號',`<span id="bk-el">${bank['銀行帳號']}</span><button class="copy-btn" onclick="copyEl('bk-el')">複製</button>`) +
-      mkDr('持有人',bank['持有人']);
+      mkDr('銀行名稱', bank['銀行名稱']) +
+      mkDr('銀行帳號', `<span id="bk-el">${bank['銀行帳號']}</span><button class="copy-btn" onclick="copyEl('bk-el')">複製</button>`) +
+      mkDr('持有人', bank['持有人']);
   } else {
     document.getElementById('bank-rows').innerHTML='<div style="font-size:13px;color:var(--g400);padding:8px 0">尚未設定銀行帳號</div>';
     showBankForm();
   }
   if (PROFILE.bank) {
-    const rfb=document.getElementById('rf-bank'), rfa=document.getElementById('rf-acc');
-    if(rfb) rfb.value = bank['銀行名稱'];
-    if(rfa) rfa.value = bank['銀行帳號'];
+    const rfb = document.getElementById('rf-bank');
+    const rfa = document.getElementById('rf-acc');
+    if (rfb) rfb.value = bank['銀行名稱'];
+    if (rfa) rfa.value = bank['銀行帳號'];
   }
 }
 function showBankForm() { setEl('bank-form','block'); }
@@ -1058,7 +1179,6 @@ function renderRefund() {
   const dep=PROFILE.deposit, bank=PROFILE.bank;
   const bdg=document.getElementById('ref-dep-badge');
   const info=document.getElementById('ref-dep-info');
-  const form=document.getElementById('ref-form');
   if (!dep) {
     bdg.className='bdg bg'; bdg.textContent='未繳';
     info.innerHTML='<div style="font-size:13px;color:var(--g400);padding:8px 0">押金尚未繳交</div>';
@@ -1068,7 +1188,7 @@ function renderRefund() {
     bdg.className='bdg bok'; bdg.textContent='已繳交';
     info.innerHTML = mkDr('狀態','<span class="bdg bok">已確認</span>')+mkDr('對帳完成',dep['對帳時間']);
     if (dep['退款申請時間']) {
-      form.innerHTML=`<div class="al al-ok"><span class="al-icon">✓</span><div>退款申請已於 ${dep['退款申請時間']} 送出,等待審核.</div></div>`;
+      document.getElementById('ref-form').innerHTML=`<div class="al al-ok"><span class="al-icon">✓</span><div>退款申請已於 ${dep['退款申請時間']} 送出，等待審核.</div></div>`;
       setEl('ref-form','block');
     } else {
       setEl('ref-form','block');
@@ -1090,14 +1210,15 @@ async function doApplyRefund() {
 }
 
 // ════════════════════
-//  工具
+//  工具函式
 // ════════════════════
-function v(id)          { const el=document.getElementById(id); return el?el.value.trim():''; }
-function setEl(id,d)    { const el=document.getElementById(id); if(el)el.style.display=d; }
-function mkDr(l,v_)     { return `<div class="dr"><span class="dl">${l}</span><span class="dv">${v_}</span></div>`; }
-function copyEl(id)     { const t=document.getElementById(id); if(t)navigator.clipboard.writeText(t.textContent.trim()).then(()=>toast('已複製')); }
-function showErr(id,m)  { const el=document.getElementById(id); el.textContent=m; el.style.display='block'; }
-function hideErr(id)    { document.getElementById(id).style.display='none'; }
+function v(id)        { const el=document.getElementById(id); return el?el.value.trim():''; }
+function setEl(id,d)  { const el=document.getElementById(id); if(el)el.style.display=d; }
+function mkDr(l,vv)   { return `<div class="dr"><span class="dl">${l}</span><span class="dv">${vv}</span></div>`; }
+function copyEl(id)   { const t=document.getElementById(id); if(t)navigator.clipboard.writeText(t.textContent.trim()).then(()=>toast('已複製')); }
+function showErr(id,m){ const el=document.getElementById(id); el.textContent=m; el.style.display='block'; }
+function hideErr(id)  { document.getElementById(id).style.display='none'; }
+function escapeHtml(str) { return String(str||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;'); }
 
 function setBtnLoading(id, loading) {
   const btn = document.getElementById(id);
@@ -1106,7 +1227,7 @@ function setBtnLoading(id, loading) {
   btn.textContent = loading ? '處理中…' : (id==='login-btn'?'登入':'送出資料');
 }
 
-let _tt=null;
+let _tt = null;
 function toast(msg) { const el=document.getElementById('toast'); el.textContent=msg; el.classList.add('show'); clearTimeout(_tt); _tt=setTimeout(()=>el.classList.remove('show'),2800); }
 </script>
 </body>
