@@ -1021,7 +1021,7 @@ async function handleFileUpload() {
 
     // 走 GAS 上傳（Worker 免費版有 128KB 限制，圖片無法直接傳）
     // GAS 負責：上傳 Drive + 寫入 Sheets 證件記錄
-    const GAS_URL = 'https://script.google.com/macros/s/AKfycbxwQ5zFxoFIGdI9BMV4xJwigXe216HyiTOTZwVrLsRNh-UmBjHytuOkt8RK_X6nnLIQ/exec';
+    const GAS_URL = 'https://script.google.com/macros/s/AKfycbyNZOAfLWeor2RRAq9-P5B05vxPcN2mDhBvHTE_gN4255m9IXK759KN0BH9gKzCgn3z/exec';
 
     const payload = {
       token:     TOKEN,
