@@ -1019,15 +1019,28 @@ async function handleFileUpload() {
   try {
     const b64 = await fileToB64(file);
 
-    // 直接走 Worker /api/upload-doc（同時寫入 Drive + Sheets）
-    const r = await run('uploadDoc', {
-      token:    TOKEN,
-      docType:  _uploadType,
-      fileName: file.name,
-      mimeType: file.type,
-      fileData: b64,
+    // 走 GAS 上傳（Worker 免費版有 128KB 限制，圖片無法直接傳）
+    // GAS 負責：上傳 Drive + 寫入 Sheets 證件記錄
+    const GAS_URL = 'https://script.google.com/macros/s/AKfycbxwQ5zFxoFIGdI9BMV4xJwigXe216HyiTOTZwVrLsRNh-UmBjHytuOkt8RK_X6nnLIQ/exec';
+
+    const payload = {
+      token:     TOKEN,
+      staffName: PROFILE.staff.name,
+      docType:   _uploadType,
+      fileName:  file.name,
+      mimeType:  file.type,
+      fileData:  b64,
+    };
+
+    const res = await fetch(GAS_URL, {
+      method:   'POST',
+      headers:  { 'Content-Type': 'text/plain;charset=utf-8' },
+      body:     JSON.stringify(payload),
+      redirect: 'follow',
     });
 
+    const text = await res.text();
+    const r    = JSON.parse(text);
     if (!r.ok) throw new Error(r.error || '未知錯誤');
 
     // 更新本地 PROFILE
