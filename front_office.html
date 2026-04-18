@@ -200,6 +200,10 @@ button,input,select,textarea{font-family:var(--font);}button{cursor:pointer;}
     </div>
     <button class="btn-full" id="login-btn" onclick="doLogin()">登入</button>
     <div class="sw">還沒有帳號?<a onclick="showReg()">填寫基本資料申請開通</a></div>
+    <div style="margin-top:16px;text-align:center">
+      <button onclick="runFrontDiag()" style="background:none;border:1px solid var(--bdr-md);padding:5px 12px;border-radius:6px;font-size:11px;color:var(--g400);cursor:pointer">🔧 測試連線</button>
+      <div id="front-diag" style="margin-top:10px;font-size:12px;text-align:left"></div>
+    </div>
   </div></div>
 </div>
 
@@ -613,7 +617,14 @@ function go(name, el) {
   if (el) { document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('on')); el.classList.add('on'); }
   closeSb();
   const loaders = { overview:renderOverview, profile:renderProfile, rules:renderRules, contract:renderContract, docs:renderDocs, bank:renderBank, deposit:renderDeposit, refund:renderRefund };
-  if (loaders[name]) loaders[name]();
+  if (loaders[name]) {
+    // 若 PROFILE 還沒載入，先嘗試載入再 render
+    if (!PROFILE) {
+      loadProfile().then(() => { if (loaders[name]) loaders[name](); });
+    } else {
+      loaders[name]();
+    }
+  }
 }
 
 function openSb()    { document.getElementById('sidebar').classList.add('open'); document.getElementById('overlay').classList.add('on'); }
@@ -638,6 +649,10 @@ window.addEventListener('DOMContentLoaded', async () => {
     } else {
       TOKEN = '';
       localStorage.removeItem('lemon_token');
+      // 若是連線失敗（非 session 過期），顯示提示
+      if (r.error && r.error.includes('連線失敗')) {
+        showErr('login-err', '⚠ 伺服器連線失敗，請稍後再試：' + r.error);
+      }
     }
   }
 });
@@ -650,15 +665,45 @@ async function doLogin() {
   setBtnLoading('login-btn', true);
   const r = await run('staffLogin', {idNumber:id, phone:tel});
   setBtnLoading('login-btn', false);
-  if (!r.ok) { showErr('login-err', r.error); return; }
+  if (!r.ok) {
+    // 顯示更友善的錯誤訊息
+    let msg = r.error || '登入失敗';
+    if (msg.includes('連線失敗')) msg = '⚠ 無法連到伺服器，請確認網路後再試。\n\n詳細：' + msg;
+    showErr('login-err', msg);
+    return;
+  }
   TOKEN = r.token;
   localStorage.setItem('lemon_token', TOKEN);
   document.getElementById('nav-name').textContent = r.name;
   document.getElementById('nav-role').textContent = r.region;
   document.getElementById('nav-av').textContent   = r.name.charAt(0);
-  await loadProfile();
+  const ok = await loadProfile();
+  if (!ok) {
+    // loadProfile 失敗但登入成功 → 還是進去，overview 會顯示 loading 並 retry
+    PROFILE = null;
+  }
   showPg('pg-main');
   go('overview', document.getElementById('n-overview'));
+}
+
+async function runFrontDiag() {
+  const out = document.getElementById('front-diag');
+  out.innerHTML = '⏳ 連線測試中…';
+  try {
+    const start = Date.now();
+    const res = await fetch('https://new-training.jenny-bed.workers.dev/api/get-region-names', {
+      method: 'POST', headers: {'Content-Type':'application/json'}, body: '{}'
+    });
+    const ms = Date.now() - start;
+    const data = await res.json();
+    if (data.ok) {
+      out.innerHTML = `<span style="color:var(--teal-dk)">✅ 連線正常（${ms}ms）</span>`;
+    } else {
+      out.innerHTML = `<span style="color:var(--amber)">⚠ 連線成功但 API 錯誤：${data.error}</span>`;
+    }
+  } catch(e) {
+    out.innerHTML = `<span style="color:var(--red)">❌ 連線失敗：${e.message}<br>請確認網路或稍後再試。</span>`;
+  }
 }
 
 async function doLogout() {
@@ -708,8 +753,17 @@ async function doRegister() {
 // ════════════════════
 async function loadProfile() {
   const r = await run('getMyProfile', {token:TOKEN});
-  if (!r.ok) return;
+  if (!r.ok) {
+    // Token 失效就清掉，讓使用者重新登入
+    if (r.error && (r.error.includes('登入') || r.error.includes('session') || r.error.includes('token'))) {
+      TOKEN = ''; PROFILE = null;
+      localStorage.removeItem('lemon_token');
+      showPg('pg-login');
+    }
+    return false;
+  }
   PROFILE = r;
+  return true;
 }
 
 // ════════════════════
@@ -727,17 +781,26 @@ function ovRow(navId, goId, status, icon, label, valHtml, clickable) {
 }
 
 function renderOverview() {
-  if (!PROFILE) return;
-  const { staff, rules, contract, docs, bank, deposit } = PROFILE;
+  if (!PROFILE) {
+    document.getElementById('ov-list').innerHTML = '<div class="loading"><div class="spinner"></div>資料載入中，請稍候…</div>';
+    return;
+  }
+  // 防禦性取值：各欄位可能為 null
+  const staff    = PROFILE.staff    || {};
+  const rules    = PROFILE.rules    || null;
+  const contract = PROFILE.contract || null;
+  const docs     = PROFILE.docs     || {};
+  const bank     = PROFILE.bank     || null;
+  const deposit  = PROFILE.deposit  || null;
   const r = rules;
   const c = contract;
-  const idf = docs && docs.idFront;
-  const idb = docs && docs.idBack;
-  const gc  = docs && docs.gc;
-  // 找契約上傳文件
-  const ctDoc = PROFILE.allDocs && PROFILE.allDocs.find(d=>d['文件類型']==='CONTRACT_SIGNED');
+  const idf = docs.idFront || null;
+  const idb = docs.idBack  || null;
+  const gc  = docs.gc      || null;
+  const allDocs = Array.isArray(PROFILE.allDocs) ? PROFILE.allDocs : [];
+  const ctDoc = allDocs.find(d=>d['文件類型']==='CONTRACT_SIGNED') || null;
 
-  document.getElementById('ov-sub').textContent = `${staff.name} · ${staff.region}`;
+  document.getElementById('ov-sub').textContent = `${staff.name||''} · ${staff.region||''}`;
 
   const items = [
     ovRow('n-profile','profile','ok','✓','個人資料',`<span class="bdg bok">已建立</span>`,true),
@@ -783,14 +846,14 @@ function renderOverview() {
 // ════════════════════
 function renderProfile() {
   if (!PROFILE) return;
-  const s = PROFILE.staff;
+  const s = PROFILE.staff || {};
   const rows = [
-    ['姓名',s.name],['身份證字號',s.idNumber],['出生年月日',s.dob||'—'],
+    ['姓名',s.name||'—'],['身份證字號',s.idNumber||'—'],['出生年月日',s.dob||'—'],
     ['手機號碼', s.phone ? (String(s.phone).startsWith('0') ? s.phone : '0'+s.phone) : '—'],
     ['電子郵件',s.email||'—'],['聯絡地址',s.address||'—'],
     ['緊急聯絡人',`${s.emergencyName||'—'}(${s.emergencyRel||'—'}) ${s.emergencyPhone ? (String(s.emergencyPhone).startsWith('0') ? s.emergencyPhone : '0'+s.emergencyPhone) : '—'}`],
     ['交通工具',s.transport||'—'],['新冠疫苗',s.vaccine||'—'],
-    ['服務地區',s.region],['帳號狀態',`<span class="bdg bok">${s.status}</span>`],
+    ['服務地區',s.region||'—'],['帳號狀態',`<span class="bdg bok">${s.status||'—'}</span>`],
   ];
   document.getElementById('profile-rows').innerHTML = rows.map(([l,vv])=>mkDr(l,vv)).join('');
 }
@@ -824,10 +887,12 @@ async function doAgreeRules() {
 // ════════════════════════════════════════════════════
 function renderContract() {
   if (!PROFILE) return;
-  const { staff, contract, allDocs } = PROFILE;
+  const staff    = PROFILE.staff    || {};
+  const contract = PROFILE.contract || null;
+  const allDocs  = Array.isArray(PROFILE.allDocs) ? PROFILE.allDocs : [];
 
   // 找已上傳的已簽名契約文件
-  const ctDoc = allDocs && allDocs.find(d => d['文件類型'] === 'CONTRACT_SIGNED');
+  const ctDoc = allDocs.find(d => d['文件類型'] === 'CONTRACT_SIGNED') || null;
 
   // 先全部隱藏
   setEl('ct-ok','none');
@@ -936,10 +1001,10 @@ function renderContract() {
 // ════════════════════
 function renderDocs() {
   if (!PROFILE) return;
-  const docs = PROFILE.docs || {};
-  const idf = docs.idFront;
-  const idb = docs.idBack;
-  const gc  = docs.gc;
+  const docs = PROFILE.docs || {};   // ← null 安全
+  const idf = docs.idFront || null;
+  const idb = docs.idBack  || null;
+  const gc  = docs.gc      || null;
 
   // ── 身份證正面 ──
   document.getElementById('doc-front-area').innerHTML = idf
@@ -986,6 +1051,7 @@ function uploadedHtml(doc, docType) {
 function applyUploadedDocToProfile(docType, resp) {
   if (!PROFILE) return;
   if (!PROFILE.docs) PROFILE.docs = {};
+  if (!PROFILE.allDocs) PROFILE.allDocs = [];
 
   const docObj = {
     '人員ID': PROFILE.staff ? PROFILE.staff.id : '',
