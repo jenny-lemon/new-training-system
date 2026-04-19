@@ -1005,117 +1005,140 @@ function getSignatureDataUrl() {
 //  PDF 下載
 // ════════════════════
 async function downloadContractPdf() {
-  if (typeof window.jspdf === 'undefined' && typeof window.jsPDF === 'undefined') {
-    toast('PDF 套件載入中，請稍候再試…');
-    await loadJsPDF();
-  }
-  const { jsPDF } = window.jspdf || { jsPDF: window.jsPDF };
-  if (!jsPDF) { toast('無法載入 PDF 套件'); return; }
+  toast('PDF 產生中，請稍候…');
 
+  // 載入必要套件
+  if (typeof window.html2canvas === 'undefined') { await loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js'); }
+  if (typeof window.jspdf === 'undefined' && typeof window.jsPDF === 'undefined') { await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'); }
+
+  // ── 建立離屏契約 DOM ──────────────────────────────────
   const staff = PROFILE && PROFILE.staff ? PROFILE.staff : {};
-  const doc   = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
+  const now   = new Date().toLocaleDateString('zh-TW', { timeZone:'Asia/Taipei' });
 
-  // 字型設定（使用 ASCII 相容字元）
-  doc.setFont('helvetica');
-  const L = 20, R = 190, W = R - L;
-  let y = 20;
+  // 取得章圖
+  const bigSealSrc   = (document.querySelector('img[alt="公司大章"]')   || {}).src || '';
+  const smallSealSrc = (document.querySelector('img[alt="負責人小章"]') || {}).src || '';
+  const sigData      = getSignatureDataUrl();
 
-  // 標題
-  doc.setFontSize(16); doc.setFont('helvetica','bold');
-  doc.text('Intermediary Contract', (L + R) / 2, y, { align: 'center' }); y += 8;
-  doc.setFontSize(10); doc.setFont('helvetica','normal');
-  doc.text('(Jia Jian Cheng Ke Qi Yue - Lemon Professional Cleaning)', (L + R) / 2, y, { align: 'center' }); y += 10;
+  const container = document.createElement('div');
+  container.style.cssText = [
+    'position:fixed','top:-9999px','left:-9999px',
+    'width:794px','background:#fff','padding:48px 56px',
+    'font-family:"Noto Sans TC",sans-serif','font-size:13px','line-height:1.9','color:#1A1917',
+  ].join(';');
 
-  doc.setLineWidth(0.5); doc.line(L, y, R, y); y += 8;
+  container.innerHTML = `
+    <div style="text-align:center;margin-bottom:20px">
+      <div style="font-size:20px;font-weight:700;margin-bottom:4px">居間承攬契約</div>
+      <div style="font-size:12px;color:#6B6862">檸檬專業清潔有限公司</div>
+    </div>
+    <hr style="border:none;border-top:1.5px solid #C8C5BC;margin-bottom:20px">
 
-  // 條款
-  const arts = [
-    ['Article 1 Contract Period',
-     '1. From April 1, 2026 to March 31, 2027 (one year).\n2. Auto-renewed annually; either party must notify one month in advance to terminate.'],
-    ['Article 2 Matching Method',
-     '1. Party B agrees to provide available time slots within the first 3 calendar days of each month.\n2. Party B may freely accept or decline matched assignments.'],
-    ['Article 3 Remuneration',
-     'Party B agrees that Party A deducts 35-50% matching fee. Settlement on the 10th and 20th each month.'],
-    ['Article 4 Service Requirements',
-     'Party B shall not intentionally damage or steal client property. Party A may terminate the contract and claim damages.'],
-    ['Article 5-8 Other Provisions',
-     'Procedures for non-performance, confidentiality, jurisdiction (Taiwan Taipei District Court), and supplementary rules apply.'],
-  ];
+    <div style="margin-bottom:12px"><div style="font-weight:700;margin-bottom:4px">第一條　合約期間</div>
+    <div style="padding-left:1.2em">
+      <p style="margin:0">1. 中華民國 115 年 4 月 1 日至 116 年 3 月 31 日止，共計一年。</p>
+      <p style="margin:0">2. 期滿後以相同條件自動展延一年；任一方欲終止應於前一個月告知他方。</p>
+    </div></div>
 
-  doc.setFontSize(10);
-  for (const [title, body] of arts) {
-    doc.setFont('helvetica','bold');
-    doc.text(title, L, y); y += 5;
-    doc.setFont('helvetica','normal');
-    const lines = doc.splitTextToSize(body, W);
-    doc.text(lines, L, y); y += lines.length * 5 + 3;
-  }
+    <div style="margin-bottom:12px"><div style="font-weight:700;margin-bottom:4px">第二條　媒合方式說明</div>
+    <div style="padding-left:1.2em">
+      <p style="margin:0">1. 乙方同意每月前 3 個日曆天提供下月可媒合之勞務時段。</p>
+      <p style="margin:0">2. 媒合成立時乙方與甲方客戶之間成立承攬契約；乙方得自行決定是否承接，甲方不得干涉。</p>
+    </div></div>
 
-  y += 5; doc.setLineWidth(0.3); doc.line(L, y, R, y); y += 8;
+    <div style="margin-bottom:12px"><div style="font-weight:700;margin-bottom:4px">第三條　勞務報酬計算與給付</div>
+    <div style="padding-left:1.2em">乙方同意甲方自總費用中抽取 35–50% 媒合費用；甲方每月 10 日及 20 日分別結算代收勞務款，遇例假日順延。</div></div>
 
-  // 簽名欄
-  doc.setFont('helvetica','bold'); doc.setFontSize(11);
-  doc.text('Party A (Jia Fang)', L, y);
-  doc.text('Party B (Yi Fang)', L + W / 2, y);
-  y += 6;
+    <div style="margin-bottom:12px"><div style="font-weight:700;margin-bottom:4px">第四條　承攬服務要求</div>
+    <div style="padding-left:1.2em">乙方不得故意或過失損壞或偷竊甲方客戶物品；偷竊者甲方得解除本約並請求損害賠償。</div></div>
 
-  doc.setFont('helvetica','normal'); doc.setFontSize(9);
-  const leftLines = [
-    'Company: Lemon Professional Cleaning Co., Ltd.',
-    'Rep: Xie Yao-Sheng   Unified No.: 42627791',
-    'Address: 4F, No.210, Sec.4, Xinyi Rd., Da-an Dist., Taipei',
-    'Tel: 02-27002386',
-  ];
-  leftLines.forEach(l => { doc.text(l, L, y); y += 4.5; });
+    <div style="margin-bottom:12px"><div style="font-weight:700;margin-bottom:4px">第五條至第八條</div>
+    <div style="padding-left:1.2em">無法履行程序、保密條款、管轄法院（台灣台北地方法院），附則悉依民法承攬章節辦理。</div></div>
 
-  // 甲方章（大章 + 小章）
+    <hr style="border:none;border-top:1px solid #C8C5BC;margin:24px 0">
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:8px">
+      <div>
+        <div style="font-weight:700;font-size:13px;margin-bottom:8px">甲方：檸檬專業清潔有限公司</div>
+        <div>負責人：謝曜聲　統一編號：42627791</div>
+        <div>地址：台北市大安區信義路四段210號4樓</div>
+        <div>電話：02-27002386</div>
+        <div style="margin-top:10px;display:flex;gap:8px;align-items:flex-end">
+          ${bigSealSrc   ? `<img src="${bigSealSrc}"   style="width:80px;height:80px;object-fit:contain">` : ''}
+          ${smallSealSrc ? `<img src="${smallSealSrc}" style="width:54px;height:54px;object-fit:contain">` : ''}
+        </div>
+      </div>
+      <div>
+        <div style="font-weight:700;font-size:13px;margin-bottom:8px">乙方（承攬人）</div>
+        <div>姓名：${staff.name || '—'}</div>
+        <div>身份證字號：${staff.idNumber || '—'}</div>
+        <div>現居地址：${staff.address || '—'}</div>
+        <div>連絡電話：${staff.phone || '—'}</div>
+        <div style="margin-top:10px">
+          <div style="font-size:11px;color:#6B6862;margin-bottom:4px">乙方親筆簽名：</div>
+          ${sigData
+            ? `<img src="${sigData}" style="height:60px;max-width:200px;object-fit:contain;border-bottom:1px solid #999">`
+            : `<div style="width:180px;height:60px;border-bottom:1px solid #999"></div>`}
+        </div>
+        <div style="margin-top:10px;font-size:11px;color:#6B6862">簽署日期：${now}</div>
+      </div>
+    </div>
+    <div style="margin-top:32px;font-size:10px;color:#9E9B93;text-align:center">本契約由雙方線上確認，具同等法律效力。</div>
+  `;
+
+  document.body.appendChild(container);
+
   try {
-    const bigSeal   = document.querySelector('img[alt="公司大章"]');
-    const smallSeal = document.querySelector('img[alt="負責人小章"]');
-    if (bigSeal)   doc.addImage(bigSeal.src,   'PNG', L,      y - 18, 22, 22);
-    if (smallSeal) doc.addImage(smallSeal.src, 'PNG', L + 24, y - 18, 15, 15);
-  } catch(e) {}
+    const canvas = await window.html2canvas(container, {
+      scale: 2, useCORS: true, allowTaint: true,
+      backgroundColor: '#ffffff', logging: false,
+    });
+    document.body.removeChild(container);
 
-  // 乙方資料
-  let ry = y - (leftLines.length * 4.5);
-  const rightX = L + W / 2;
-  const rightLines = [
-    'Name: ' + (staff.name || '—'),
-    'ID No.: ' + (staff.idNumber || '—'),
-    'Address: ' + (staff.address || '—'),
-    'Phone: ' + (staff.phone || '—'),
-  ];
-  rightLines.forEach(l => { doc.text(l, rightX, ry); ry += 4.5; });
+    const { jsPDF } = window.jspdf || { jsPDF: window.jsPDF };
+    const doc = new jsPDF({ orientation: 'p', unit: 'px', format: 'a4' });
+    const pageW = doc.internal.pageSize.getWidth();
+    const pageH = doc.internal.pageSize.getHeight();
+    const imgW  = pageW;
+    const imgH  = (canvas.height / canvas.width) * imgW;
 
-  // 乙方簽名圖
-  const sigData = getSignatureDataUrl();
-  if (sigData) {
-    try { doc.addImage(sigData, 'PNG', rightX, ry, 50, 18); ry += 20; }
-    catch(e) {}
-  } else {
-    doc.setDrawColor(180); doc.rect(rightX, ry, 60, 18);
-    doc.setFontSize(8); doc.setTextColor(180);
-    doc.text('(Signature)', rightX + 2, ry + 10);
-    doc.setTextColor(0); ry += 22;
+    let offsetY = 0;
+    let remaining = imgH;
+    while (remaining > 0) {
+      if (offsetY > 0) doc.addPage();
+      const sliceH = Math.min(pageH, remaining);
+      const srcY = (offsetY / imgH) * canvas.height;
+      const srcH = (sliceH / imgH)  * canvas.height;
+
+      // 截取這一頁的 canvas 片段
+      const pageCanvas = document.createElement('canvas');
+      pageCanvas.width  = canvas.width;
+      pageCanvas.height = srcH;
+      pageCanvas.getContext('2d').drawImage(canvas, 0, srcY, canvas.width, srcH, 0, 0, canvas.width, srcH);
+      const pageData = pageCanvas.toDataURL('image/jpeg', 0.92);
+      doc.addImage(pageData, 'JPEG', 0, 0, imgW, sliceH);
+      offsetY   += sliceH;
+      remaining -= sliceH;
+    }
+
+    doc.save('檸檬居間承攬契約-' + (staff.name || 'staff') + '.pdf');
+    toast('✓ PDF 已下載');
+  } catch(e) {
+    if (document.body.contains(container)) document.body.removeChild(container);
+    toast('PDF 產生失敗：' + e.message);
   }
-
-  // 日期
-  const now = new Date().toLocaleDateString('zh-TW', { timeZone: 'Asia/Taipei' });
-  doc.setFontSize(9); doc.setFont('helvetica','normal');
-  doc.text('Signed Date: ' + now, rightX, ry + 4);
-
-  doc.save('Lemon-Contract-' + (staff.name || 'staff') + '.pdf');
-  toast('✓ PDF 已下載');
 }
 
-function loadJsPDF() {
+function loadScript(src) {
   return new Promise((res) => {
+    if (document.querySelector(`script[src="${src}"]`)) { res(); return; }
     const s = document.createElement('script');
-    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
-    s.onload = res; s.onerror = res;
+    s.src = src; s.onload = res; s.onerror = res;
     document.head.appendChild(s);
   });
 }
+
+function loadJsPDF() { return loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'); }
 
 async function doSignContract() {
   if (!document.getElementById('ct-cb').checked) { toast('請先勾選確認已閱讀'); return; }
