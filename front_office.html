@@ -1095,7 +1095,7 @@ async function downloadContractPdf() {
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:8px">
       <div>
         <div style="font-weight:700;font-size:13px;margin-bottom:8px">甲方：檸檬專業清潔有限公司</div>
-        <div>負責人：謝曜聲</div>
+        <div>負責人：賴彥妃</div>
         <div>統一編號：42627791</div>
         <div>連絡電話：02-27002386</div>
         <div>公司地址：台北市大安區信義路四段210號4樓</div>
@@ -1409,10 +1409,21 @@ function renderDeposit() {
   const dep = PROFILE.deposit;
   if (dep) {
     setEl('dep-ok','flex');
-    document.getElementById('dep-ok-msg').textContent = dep['對帳狀態']==='已對帳'
-      ? `押金已於 ${dep['對帳時間']} 確認收款完成.`
-      : `匯款資料已送出,等待管理員對帳確認(帳號後5碼:${dep['帳號後5碼']})`;
-    setEl('dep-form','none');
+    if (dep['對帳狀態']==='已對帳') {
+      document.getElementById('dep-ok-msg').textContent = `押金已於 ${dep['對帳時間']} 確認收款完成.`;
+      setEl('dep-form','none'); // 已對帳才隱藏表單
+    } else {
+      document.getElementById('dep-ok-msg').textContent = `✓ 匯款資料已送出，等待管理員對帳確認（帳號後5碼：${dep['帳號後5碼']}）`;
+      // 待對帳時保留表單，填入已送出的資料讓用戶看到
+      const dateEl = document.getElementById('dep-date');
+      const last5El = document.getElementById('dep-last5');
+      const timeEl = document.getElementById('dep-time');
+      const amtEl = document.getElementById('dep-amount');
+      if (dateEl && !dateEl.value) dateEl.value = dep['匯款日期'] || '';
+      if (timeEl && !timeEl.value) timeEl.value = dep['匯款時間'] || '';
+      if (last5El && !last5El.value) last5El.value = dep['帳號後5碼'] || '';
+      if (amtEl && !amtEl.value) amtEl.value = dep['匯款金額'] || 2000;
+    }
   }
 }
 
@@ -1421,7 +1432,12 @@ async function doSubmitDeposit() {
   if (!dep.remitDate||!dep.lastFive) { toast('請填寫匯款日期和帳號後5碼'); return; }
   const r = await run('submitDeposit', {token:TOKEN, dep});
   if (!r.ok) { toast(r.error); return; }
-  await loadProfile(); renderDeposit(); renderOverview(); toast('✓ 匯款資料已送出');
+  // 直接顯示成功訊息，保留欄位，不重新載入（避免欄位清空）
+  setEl('dep-ok','flex');
+  document.getElementById('dep-ok-msg').textContent = `✓ 匯款資料已送出，等待管理員對帳確認（帳號後5碼：${dep.lastFive}）`;
+  await loadProfile();
+  renderOverview();
+  toast('✓ 匯款資料已送出');
 }
 
 // ════════════════════
