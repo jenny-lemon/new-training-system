@@ -376,7 +376,7 @@ button,input,select,textarea{font-family:var(--font);}button{cursor:pointer;}a{c
     </div>
     <div class="modal-foot">
       <button class="btn btn-sm btn-b" onclick="doExportPdf()">⬇ 匯出個人檔案 PDF</button>
-      <button class="btn btn-sm" onclick="doContractPdf()" id="pm-contract-pdf-btn">📄 下載/重送契約 PDF</button>
+      <button class="btn btn-sm" onclick="doResendContract()" id="pm-resend-btn">🔁 重送契約</button>
       <button class="btn btn-sm" onclick="closeModal('profile-modal')">關閉</button>
     </div>
   </div>
@@ -567,7 +567,7 @@ async function loadNewbies(pg){
     <td><span class="bdg ${s.status==='啟用中'?'bok':'bg'}">${s.status}</span></td>
     <td class="bg-row" style="white-space:nowrap">
       <button class="btn btn-sm btn-p" onclick="openProfile('${s.id}')">查看</button>
-      ${s.contract==='已簽署'?`<button class="btn btn-sm" onclick="regenContract('${s.id}','${s.name}','${s.region}')" title="重送/下載承攬契約 PDF">📄</button>`:''}
+      ${s.contract==='已簽署'?`<button class="btn btn-sm" onclick="regenContract('${s.id}','${s.name}')" title="重送契約">🔁</button>`:''}
     </td></tr>`;
   }).join('')||'<tr><td colspan="10" style="text-align:center;padding:18px;color:var(--g400)">沒有資料</td></tr>';
   const pages=Math.max(1,Math.ceil(r.total/20));
@@ -718,168 +718,173 @@ async function doConfirmGc(staffId){
   toast('✓ 確認收到正本'); openProfile(staffId);
 }
 // ════════════════════════════════════════════════
-//  匯出個人檔案 PDF（瀏覽器端截圖方式，身份證原圖）
+//  匯出個人檔案 PDF（身份證原圖，其他欄位文字）
 // ════════════════════════════════════════════════
-let _exportStaffCache = null; // 暫存目前 modal 的資料供匯出使用
 
 async function doExportPdf(){
   if(!_curStaffId){ toast('請先開啟個人資料'); return; }
   toast('PDF 產生中，請稍候…');
 
-  // 載入套件
   if(typeof window.html2canvas==='undefined') await loadBOScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
   if(typeof window.jspdf==='undefined'&&typeof window.jsPDF==='undefined') await loadBOScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
 
   const r = await run('getStaffDetail',{token:TOKEN, staffId:_curStaffId});
-  if(!r.ok){ toast('載入失敗:'+r.error); return; }
-  const {staff, rules, contract, allDocs, bank, deposit} = r;
+  if(!r.ok){ toast('載入失敗：'+r.error); return; }
+  const {staff, rules, contract, allDocs, bank} = r;
   const docs = Array.isArray(allDocs) ? allDocs : [];
-
-  // 身份證圖片（從 Drive 取得預覽，若有）
   const idFront = docs.find(d=>d['文件類型']==='ID_FRONT');
   const idBack  = docs.find(d=>d['文件類型']==='ID_BACK');
   const gc      = docs.find(d=>d['文件類型']==='GOOD_CONDUCT');
-
-  function driveThumb(id){ return id ? `https://drive.google.com/thumbnail?id=${id}&sz=w600` : ''; }
-
-  // 契約/規章 審核時間
-  const ctDoc = docs.find(d=>d['文件類型']==='CONTRACT_SIGNED');
-
-  const now = new Date().toLocaleDateString('zh-TW',{timeZone:'Asia/Taipei'});
-
-  const container = document.createElement('div');
-  container.style.cssText='position:fixed;top:-9999px;left:-9999px;width:794px;background:#fff;padding:40px 52px;font-family:"Noto Sans TC",sans-serif;font-size:12px;line-height:1.8;color:#1A1917;';
+  const ctDoc   = docs.find(d=>d['文件類型']==='CONTRACT_SIGNED');
+  const today   = new Date().toLocaleDateString('zh-TW',{timeZone:'Asia/Taipei'});
 
   function row(label, val){
-    return `<div style="display:grid;grid-template-columns:120px 1fr;border-bottom:1px solid #eee;padding:5px 0">
-      <div style="color:#6B6862;font-size:11px">${label}</div>
-      <div>${val||'—'}</div></div>`;
+    return `<div style="display:grid;grid-template-columns:128px 1fr;border-bottom:1px solid #EDEBE4;padding:6px 0;font-size:12px"><div style="color:#9E9B93">${label}</div><div>${val||'—'}</div></div>`;
+  }
+  function sec(title){
+    return `<div style="font-weight:700;font-size:13px;color:#C14F2B;margin:20px 0 8px;padding-bottom:4px;border-bottom:2px solid #F2EEE7">${title}</div>`;
+  }
+  function driveImg(fileId){
+    return fileId ? `https://drive.google.com/thumbnail?id=${fileId}&sz=w800` : '';
   }
 
-  container.innerHTML = `
-    <div style="text-align:center;margin-bottom:18px">
-      <div style="font-size:18px;font-weight:700">檸檬家事　新人個人檔案</div>
-      <div style="font-size:11px;color:#9E9B93;margin-top:4px">產出時間：${now}　地區：${staff.region||'—'}</div>
-    </div>
-    <hr style="border:none;border-top:2px solid #E5E3DC;margin-bottom:18px">
+  const container = document.createElement('div');
+  container.style.cssText='position:fixed;top:-9999px;left:-9999px;width:760px;background:#fff;padding:44px 52px;font-family:"Noto Sans TC",sans-serif;line-height:1.85;color:#1A1917;box-sizing:border-box;';
 
-    <div style="font-weight:700;font-size:13px;margin-bottom:8px;color:#C14F2B">▌ 個人資料</div>
-    ${row('姓名', `<strong>${staff.name}</strong>`)}
-    ${row('身份證字號', `<span style="font-family:monospace">${staff.idNumber}</span>`)}
+  container.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px">
+      <div>
+        <div style="font-size:19px;font-weight:700;margin-bottom:2px">檸檬家事　新人個人檔案</div>
+        <div style="font-size:11px;color:#9E9B93">產出日期：${today}　服務地區：${staff.region||'—'}</div>
+      </div>
+      <div style="font-size:11px;color:#C8C5BC;text-align:right">統一編號：42627791</div>
+    </div>
+    <div style="border-top:2px solid #E5E3DC;margin-bottom:4px"></div>
+
+    ${sec('▌ 個人基本資料')}
+    ${row('姓名', '<strong>'+staff.name+'</strong>')}
+    ${row('身份證字號', '<span style="font-family:monospace;letter-spacing:1px">'+staff.idNumber+'</span>')}
     ${row('出生年月日', staff.dob)}
-    ${row('手機號碼', staff.phone ? (String(staff.phone).startsWith('0')?staff.phone:'0'+staff.phone) : '—')}
+    ${row('手機號碼', staff.phone?(String(staff.phone).startsWith('0')?staff.phone:'0'+staff.phone):'—')}
     ${row('電子郵件', staff.email)}
     ${row('聯絡地址', staff.address)}
-    ${row('緊急聯絡人', `${staff.emergencyName||'—'}（${staff.emergencyRel||'—'}）${staff.emergencyPhone||'—'}`)}
+    ${row('緊急聯絡人', (staff.emergencyName||'—')+'（'+(staff.emergencyRel||'—')+'）'+(staff.emergencyPhone||'—'))}
     ${row('交通工具', staff.transport)}
     ${row('新冠疫苗', staff.vaccine)}
     ${row('服務地區', staff.region)}
     ${row('帳號狀態', staff.status)}
 
-    <div style="font-weight:700;font-size:13px;margin:18px 0 8px;color:#C14F2B">▌ 規章與契約</div>
-    ${row('規章同意', rules ? `✓ 已同意（${rules['同意時間']||'—'}）` : '⏳ 未同意')}
-    ${row('契約生成', contract ? contract['生成時間']||'—' : '未生成')}
-    ${row('契約簽署', ctDoc && ctDoc['審核狀態']==='APPROVED' ? `✓ 審核通過（${ctDoc['審核時間']||'—'}）` : (ctDoc ? '待審核' : '未上傳'))}
+    ${sec('▌ 規章同意')}
+    ${rules
+      ? row('同意狀態','<span style="color:#2D8653;font-weight:600">✓ 已同意</span>')+
+        row('同意時間', rules['同意時間'])+
+        row('規章版本', rules['規章版本']||'—')+
+        row('IP 位址',  rules['IP位址']||'—')
+      : row('同意狀態','<span style="color:#9E9B93">⏳ 尚未同意</span>')}
 
-    <div style="font-weight:700;font-size:13px;margin:18px 0 8px;color:#C14F2B">▌ 銀行帳號</div>
+    ${sec('▌ 居間承攬契約')}
+    ${contract
+      ? row('契約狀態','<span style="color:#2D8653;font-weight:600">✓ 已簽署</span>')+
+        row('簽署時間', contract['簽署時間']||contract['生成時間']||'—')+
+        row('掃描審核', ctDoc
+          ? (ctDoc['審核狀態']==='APPROVED'
+              ? '<span style="color:#2D8653">✓ 審核通過（'+(ctDoc['審核時間']||'—')+'）</span>'
+              : '<span style="color:#B5832A">待審核</span>')
+          : '<span style="color:#9E9B93">尚未上傳掃描</span>')
+      : row('契約狀態','<span style="color:#9E9B93">尚未生成</span>')}
+
+    ${sec('▌ 銀行帳號')}
     ${bank
-      ? row('戶名', bank['持有人']) + row('銀行名稱', bank['銀行名稱']) + row('銀行帳號', `<span style="font-family:monospace">${bank['銀行帳號']}</span>`)
-      : '<div style="color:#9E9B93;font-size:12px;padding:6px 0">尚未設定</div>'}
+      ? row('戶名', bank['持有人'])+row('銀行名稱', bank['銀行名稱'])+row('銀行帳號', '<span style="font-family:monospace">'+bank['銀行帳號']+'</span>')
+      : row('狀態','<span style="color:#9E9B93">尚未設定</span>')}
 
-    <div style="font-weight:700;font-size:13px;margin:18px 0 8px;color:#C14F2B">▌ 證件文件</div>
-    ${row('身份證正面', idFront&&idFront['Drive檔案ID'] ? '✓ 已上傳' + (idFront['審核狀態']==='APPROVED'?' · 審核通過':' · 待審核') : '未上傳')}
-    ${row('身份證反面', idBack&&idBack['Drive檔案ID'] ? '✓ 已上傳' + (idBack['審核狀態']==='APPROVED'?' · 審核通過':' · 待審核') : '未上傳')}
-    ${row('良民證', gc&&gc['Drive檔案ID'] ? '✓ 已上傳' + (gc['審核狀態']==='APPROVED'?' · 審核通過':' · 待審核') : '未上傳')}
-    ${gc&&gc['確認時間'] ? row('良民證收件', `✓ 確認收到正本（${gc['確認時間']}）`) : ''}
+    ${sec('▌ 證件審核狀態')}
+    ${row('身份證正面', idFront?(idFront['審核狀態']==='APPROVED'?'✓ 已審核通過':'上傳待審核'):'未上傳')}
+    ${row('身份證反面', idBack?(idBack['審核狀態']==='APPROVED'?'✓ 已審核通過':'上傳待審核'):'未上傳')}
+    ${row('良民證', gc?(gc['審核狀態']==='APPROVED'?'✓ 已審核通過':'上傳待審核'):'未上傳')}
+    ${gc&&gc['確認時間']?row('良民證收件','✓ 確認收到正本（'+gc['確認時間']+'）'):''}
 
-    <div style="font-weight:700;font-size:13px;margin:22px 0 10px;color:#C14F2B">▌ 身份證正面</div>
+    ${sec('▌ 身份證正面（原圖）')}
     ${idFront&&idFront['Drive檔案ID']
-      ? `<img src="${driveThumb(idFront['Drive檔案ID'])}" style="max-width:300px;border:1px solid #ddd;border-radius:6px" crossorigin="anonymous">`
-      : '<div style="color:#9E9B93;padding:8px 0">尚未上傳</div>'}
+      ? '<div style="margin-top:4px"><img src="'+driveImg(idFront['Drive檔案ID'])+'" style="max-width:100%;max-height:240px;object-fit:contain;border:1px solid #ddd;border-radius:4px" crossorigin="anonymous"></div>'
+      : '<div style="color:#9E9B93;font-size:12px;padding:6px 0">尚未上傳</div>'}
 
-    <div style="font-weight:700;font-size:13px;margin:18px 0 10px;color:#C14F2B">▌ 身份證反面</div>
+    ${sec('▌ 身份證反面（原圖）')}
     ${idBack&&idBack['Drive檔案ID']
-      ? `<img src="${driveThumb(idBack['Drive檔案ID'])}" style="max-width:300px;border:1px solid #ddd;border-radius:6px" crossorigin="anonymous">`
-      : '<div style="color:#9E9B93;padding:8px 0">尚未上傳</div>'}
+      ? '<div style="margin-top:4px"><img src="'+driveImg(idBack['Drive檔案ID'])+'" style="max-width:100%;max-height:240px;object-fit:contain;border:1px solid #ddd;border-radius:4px" crossorigin="anonymous"></div>'
+      : '<div style="color:#9E9B93;font-size:12px;padding:6px 0">尚未上傳</div>'}
 
-    <div style="font-weight:700;font-size:13px;margin:18px 0 10px;color:#C14F2B">▌ 良民證</div>
+    ${sec('▌ 良民證')}
     ${gc&&gc['Drive檔案ID']
-      ? `<img src="${driveThumb(gc['Drive檔案ID'])}" style="max-width:300px;border:1px solid #ddd;border-radius:6px" crossorigin="anonymous">`
-      : '<div style="color:#9E9B93;padding:8px 0">尚未上傳</div>'}
+      ? '<div style="margin-top:4px"><img src="'+driveImg(gc['Drive檔案ID'])+'" style="max-width:100%;max-height:240px;object-fit:contain;border:1px solid #ddd;border-radius:4px" crossorigin="anonymous"></div>'
+      : '<div style="color:#9E9B93;font-size:12px;padding:6px 0">尚未上傳</div>'}
 
-    <div style="margin-top:30px;font-size:10px;color:#C8C5BC;text-align:center">檸檬專業清潔有限公司　統一編號：42627791</div>
+    <div style="margin-top:36px;padding-top:12px;border-top:1px solid #EDEBE4;font-size:10px;color:#C8C5BC;text-align:center">
+      檸檬專業清潔有限公司　統一編號：42627791　台北市大安區信義路四段210號4樓
+    </div>
   `;
 
   document.body.appendChild(container);
 
-  // 等圖片載入
   await new Promise(res => {
-    const imgs = container.querySelectorAll('img');
+    const imgs = [...container.querySelectorAll('img')];
     if(!imgs.length){ res(); return; }
-    let done = 0;
-    imgs.forEach(img => {
-      img.onload = img.onerror = () => { if(++done === imgs.length) res(); };
-    });
-    setTimeout(res, 4000); // 最多等 4 秒
+    let done=0;
+    imgs.forEach(img=>{ img.onload=img.onerror=()=>{ if(++done>=imgs.length) res(); }; });
+    setTimeout(res, 6000);
   });
+  await new Promise(res=>setTimeout(res,300));
 
   try {
     const canvas = await window.html2canvas(container, {
-      scale:2, useCORS:true, allowTaint:true, backgroundColor:'#ffffff', logging:false
+      scale:2, useCORS:true, allowTaint:true, backgroundColor:'#ffffff', logging:false,
+      windowWidth:760+104
     });
     document.body.removeChild(container);
-
-    const { jsPDF } = window.jspdf || { jsPDF: window.jsPDF };
+    const {jsPDF} = window.jspdf||{jsPDF:window.jsPDF};
     const doc = new jsPDF({orientation:'p', unit:'px', format:'a4'});
-    const pageW = doc.internal.pageSize.getWidth();
-    const pageH = doc.internal.pageSize.getHeight();
-    const imgH  = (canvas.height / canvas.width) * pageW;
-    let offsetY=0, remaining=imgH;
-    while(remaining>0){
-      if(offsetY>0) doc.addPage();
-      const sliceH = Math.min(pageH, remaining);
-      const srcY = (offsetY/imgH)*canvas.height;
-      const srcH = (sliceH/imgH)*canvas.height;
-      const pc = document.createElement('canvas');
-      pc.width=canvas.width; pc.height=srcH;
-      pc.getContext('2d').drawImage(canvas, 0, srcY, canvas.width, srcH, 0, 0, canvas.width, srcH);
-      doc.addImage(pc.toDataURL('image/jpeg',0.92),'JPEG',0,0,pageW,sliceH);
-      offsetY+=sliceH; remaining-=sliceH;
+    const pW=doc.internal.pageSize.getWidth(), pH=doc.internal.pageSize.getHeight();
+    const imgH=(canvas.height/canvas.width)*pW;
+    let oy=0, rem=imgH;
+    while(rem>0){
+      if(oy>0) doc.addPage();
+      const sh=Math.min(pH,rem);
+      const sy=(oy/imgH)*canvas.height, sH=(sh/imgH)*canvas.height;
+      const pc=document.createElement('canvas'); pc.width=canvas.width; pc.height=sH;
+      pc.getContext('2d').drawImage(canvas,0,sy,canvas.width,sH,0,0,canvas.width,sH);
+      doc.addImage(pc.toDataURL('image/jpeg',0.92),'JPEG',0,0,pW,sh);
+      oy+=sh; rem-=sh;
     }
-    const region = (staff.region||'未知地區').replace(/\s/g,'');
-    const name   = (staff.name||'姓名').replace(/\s/g,'');
-    doc.save(`檸檬家事-${region}-${name}.pdf`);
+    const region=(staff.region||'地區').replace(/[\s\/\\]/g,'');
+    const name=(staff.name||'姓名').replace(/[\s\/\\]/g,'');
+    doc.save('檸檬家事-'+region+'-'+name+'.pdf');
     toast('✓ 個人檔案 PDF 已下載');
-  } catch(e) {
+  } catch(e){
     if(document.body.contains(container)) document.body.removeChild(container);
     toast('PDF 失敗：'+e.message);
+    console.error(e);
   }
 }
-
-// ── 下載/重送契約 PDF（呼叫 Worker，產生後存 Drive 並開啟）──
-async function doContractPdf(){
-  if(!_curStaffId){ toast('請先開啟個人資料'); return; }
-  await regenContract(_curStaffId);
-}
-
-async function regenContract(staffId, name, region){
-  toast('契約 PDF 產生中…');
-  const r = await run('regenContractPdf',{token:TOKEN, staffId});
-  if(!r.ok){ toast('失敗：'+r.error); return; }
-  toast('✓ 契約 PDF 已存至 Drive');
-  if(r.fileUrl) window.open(r.fileUrl,'_blank');
-}
-
-function loadBOScript(src){
-  return new Promise(res=>{
-    if(document.querySelector(`script[src="${src}"]`)){res();return;}
-    const s=document.createElement('script');
-    s.src=src; s.onload=res; s.onerror=res;
-    document.head.appendChild(s);
-  });
-}
-
 async function doExportHtml(){ doExportPdf(); } // 相容舊呼叫
+
+// ── 重送契約（讓新人可重新簽署）──
+async function doResendContract(){
+  if(!_curStaffId){ toast('請先開啟個人資料'); return; }
+  if(!confirm('確認重送契約？新人將可重新進行線上簽署。')) return;
+  toast('重送中…');
+  const r = await run('resendContract',{token:TOKEN, staffId:_curStaffId});
+  if(!r.ok){ toast('失敗：'+r.error); return; }
+  toast('✓ 已重送，新人可重新簽署');
+}
+
+// 總覽頁「🔁」按鈕
+async function regenContract(staffId, name){
+  if(!confirm('確認重送「'+name+'」的契約？')) return;
+  toast('重送中…');
+  const r = await run('resendContract',{token:TOKEN, staffId});
+  if(!r.ok){ toast('失敗：'+r.error); return; }
+  toast('✓ 已重送，'+name+' 可重新簽署');
+}
 
 // ════════════════════════════════════════════════════
 //  文件審核頁（CONTRACT_SIGNED + 身份證/良民證 分開）
